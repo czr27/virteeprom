@@ -23,7 +23,6 @@
 #include "types.h"
 #include "rbtree.h"
 
-// 1 byte - page_status 2 byte - virtnum
 #define VEEPROM_PAGE_HEADER 4
 
 #define VEEPROM_PAGE_HEADER_2B 2

@@ -178,13 +178,17 @@ static void cmd_readflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 		COND_ERROR(*p == echecksum, "checksum error");
 	}
 	chTMStopMeasurementX(&mem_tmu);
-	chprintf(chp, "successfully read 100 value during %d mks\r\n",
+	chprintf(chp, "successfully read 100 values during %d mks\r\n",
 			RTC2US(STM32_SYSCLK, mem_tmu.last));
 }
 
-static const ShellCommand commands[] = { { "mem", cmd_mem }, { "initflash",
-		cmd_initflash }, { "wipeflash", cmd_wipeflash }, { "writeflash",
-		cmd_writeflash }, { "readflash", cmd_readflash }, { NULL, NULL } };
+static const ShellCommand commands[] = {
+    { "mem", cmd_mem },
+    { "initflash", cmd_initflash },
+    { "wipeflash", cmd_wipeflash },
+    { "writeflash", cmd_writeflash },
+    { "readflash", cmd_readflash },
+    { NULL, NULL } };
 
 const ShellConfig shell_cfg = { (BaseSequentialStream *) &SD1, commands };
 

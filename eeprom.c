@@ -989,12 +989,13 @@ write_data(uint16_t id, uint8_t *data, uint16_t length,
 
     if (cursor->aligned_length_2b > 0) {
         uint16_t d;
-        if ((length >> 1) < cursor->aligned_length_2b)
+        if ((length >> 1) < cursor->aligned_length_2b) {
             d = (*(data + length - 1));
-        else
+        } else {
             d = (*(data + length - 2)) | (*(data + length - 1) << 8); //LE
-            VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
-            move_forward(cursor);
+        }
+        VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
+        move_forward(cursor);
     }
 
     VEEPROM_THROW((ret=write_2b(cursor->cur_checksum, cursor)) == OK, ret);

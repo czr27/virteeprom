@@ -65,7 +65,7 @@ rbtree *rb_delete_node(rbtree *tree, rbnode *node);
 
 rbnode *rb_search_node(rbtree *tree, void *data);
 
-rbtree* rb_release_nodes(rbtree *tree);
+rbtree *rb_release_nodes(rbtree *tree);
 
 void rb_release_node(rbnode *node);
 

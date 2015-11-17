@@ -16,8 +16,8 @@
  */
 
 
-#ifndef VEEPROM_EEPROM_H
-#define VEEPROM_EEPROM_H
+#ifndef VEEPROM_LOG_H
+#define VEEPROM_LOG_H
 
 #include <stdio.h>
 

@@ -21,11 +21,10 @@
 
 extern const char* __errmsg[];
 
-static inline const char* emsg(enum VEErrors e) {
+static inline const char* emsg(enum VEEPROM_Errors e) {
     if (e >= 0 && e < ERROR_LAST)
         return __errmsg[e];
     return "unknown errno";
 }
-
 
 #endif

@@ -21,7 +21,7 @@
 
 #define __errno_message__(errno,msg) errno,
 
-enum VEErrors {
+enum VEEPROM_Errors {
 #include "errors.h"
 ERROR_LAST
 };

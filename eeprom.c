@@ -23,16 +23,8 @@
 #include "wrappers.h"
 #include "errnum.h"
 #include "errmsg.h"
+#include "mem.h"
 
-#ifdef CHIBIOS_ON
-#include "ch.h"
-#include "chmempools.h"
-MEMORYPOOL_DECL(vpage_status_pool, sizeof(struct vpage_status), chCoreAllocI);
-MEMORYPOOL_DECL(veeprom_status_pool, sizeof(struct veeprom_status), chCoreAllocI);
-MEMORYPOOL_DECL(vrw_cursor_pool, sizeof(struct vrw_cursor), chCoreAllocI);
-MEMORYPOOL_DECL(vrw_data_pool, sizeof(struct vrw_data), chCoreAllocI);
-MEMORYPOOL_DECL(vdata_pool, sizeof(struct vdata), chCoreAllocI);
-#endif
 
 static int VEEPROM_PAGE_COUNT = 0;
 
@@ -112,34 +104,21 @@ static inline void move_backward(vrw_cursor *cursor) {
 
 
 static inline vrw_cursor *create_cursor() {
-    vrw_cursor *cursor =
-#ifdef CHIBIOS_ON
-        chPoolAlloc(&vrw_cursor_pool);
-#else
-        malloc(sizeof(vrw_cursor));
-#endif
+    vrw_cursor *cursor = VEEPROM_Alloc(vrw_cursor);
     memset(cursor, 0, sizeof(vrw_cursor));
     return cursor;
 }
 
 
 static inline vrw_data *create_cursor_data() {
-#ifdef CHIBIOS_ON
-    return chPoolAlloc(&vrw_data_pool);
-#else
-    return malloc(sizeof(vrw_data));
-#endif
+    return VEEPROM_Alloc(vrw_data);
 }
 
 
 static inline void release_cursor_data(vrw_data *data) {
     if (data == NULL)
         return;
-#ifdef CHIBIOS_ON
-    chPoolFree(&vrw_data_pool, (void*)data);
-#else
-    free(data);
-#endif
+    VEEPROM_Dealloc(vrw_data, data);
 }
 
 
@@ -147,52 +126,30 @@ static inline void release_cursor(vrw_cursor *cursor) {
     if (cursor == NULL)
         return;
     release_cursor_data(cursor->data);
-#ifdef CHIBIOS_ON
-    chPoolFree(&vrw_cursor_pool, (void*)cursor);
-#else
-    free(cursor);
-#endif
+    VEEPROM_Dealloc(vrw_cursor, cursor);
 }
 
 
 vpage_status *create_pstatus() {
-    return
-#ifdef CHIBIOS_ON
-            chPoolAlloc(&vpage_status_pool);
-#else
-            malloc(sizeof(vpage_status));
-#endif
+    return VEEPROM_Alloc(vpage_status);
 }
 
 
 void release_pstatus(vpage_status *pstatus) {
     if (pstatus == NULL)
         return;
-#ifdef CHIBIOS_ON
-    chPoolFree(&vpage_status_pool, (void*)pstatus);
-#else
-    free(pstatus);
-#endif
+    VEEPROM_Dealloc(vpage_status, pstatus);
 }
 
 
 vdata *create_vdata() {
-    return
-#ifdef CHIBIOS_ON
-        chPoolAlloc(&vdata_pool);
-#else
-        malloc(sizeof(struct vdata));
-#endif
+    return VEEPROM_Alloc(vdata);
 }
 
 
 void release_vdata(vdata *data) {
     if (data != NULL) {
-#ifdef CHIBIOS_ON
-    chPoolFree(&vpage_status_pool, (void*)data);
-#else
-    free(data);
-#endif
+        VEEPROM_Dealloc(vdata, data);
     }
 }
 
@@ -303,9 +260,9 @@ move_valid_data(rbnode *node, veeprom_status *vstatus) {
         switch (get_data_status(rcursor)) {
         case VRW_OK:
             VEEPROM_THROW((ret=_veeprom_write(rcursor->data->id,
-                            (uint8_t*)(rcursor->data->p_start_data + 2),
-                            *(rcursor->data->p_start_data + 1),
-                            vstatus)) == OK, ret,
+                    (uint8_t*)(rcursor->data->p_start_data + 2),
+                    *(rcursor->data->p_start_data + 1),
+                    vstatus)) == OK, ret,
                     release_cursor(rcursor));
             reset_cursor(rcursor);
             continue;
@@ -314,8 +271,8 @@ move_valid_data(rbnode *node, veeprom_status *vstatus) {
             VEEPROM_THROW(0, ERROR_DCNSTY);
         default:
             VEEPROM_THROW(check_page_finished(rcursor),
-            ERROR_DCNSTY, release_cursor(rcursor));
-                break;
+                    ERROR_DCNSTY, release_cursor(rcursor));
+            break;
         }
     }
 
@@ -327,7 +284,7 @@ move_valid_data(rbnode *node, veeprom_status *vstatus) {
 static inline int
 has_no_data(vpage_status *pstatus) {
     return pstatus->fragments + pstatus->free_space ==
-        FLASH_PAGE_SIZE - VEEPROM_PAGE_HEADER;
+            FLASH_PAGE_SIZE - VEEPROM_PAGE_HEADER;
 }
 
 
@@ -463,7 +420,7 @@ order_valid_page(int physnum, uint16_t *page, veeprom_status *vstatus) {
     vpage_status *pstatus_prev = get_pstatus(vstatus, counter);
     if (pstatus_prev != NULL) {
         uint16_t *page_prev = vstatus->flash_start +
-            pstatus_prev->physnum * FLASH_PAGE_SIZE_2B;
+                pstatus_prev->physnum * FLASH_PAGE_SIZE_2B;
         int free_space_prev = estimate_free_space(page_prev);
         int free_space = estimate_free_space(page);
 
@@ -521,12 +478,12 @@ static void copy_vdata(vrw_cursor *cursor, rbnode *node) {
 static int locate(vrw_cursor *cursor) {
     veeprom_status *vstatus = cursor->vstatus;
     unsigned long delta = (unsigned long)((void*)(cursor->p_cur)) -
-        (unsigned long)((void*)(vstatus->flash_start));
+            (unsigned long)((void*)(vstatus->flash_start));
     int physnum = delta / FLASH_PAGE_SIZE;
     cursor->p_start_page = vstatus->flash_start +
-        physnum * FLASH_PAGE_SIZE_2B;
+            physnum * FLASH_PAGE_SIZE_2B;
     cursor->p_end_page = cursor->p_start_page +
-        FLASH_PAGE_SIZE_2B;
+            FLASH_PAGE_SIZE_2B;
 
     int16_t status = get_page_status(cursor->p_start_page);
     VEEPROM_THROW(status == PAGE_VALID, ERROR_DCNSTY);
@@ -717,8 +674,8 @@ int veeprom_init(veeprom_status *s) {
 
     int ret = 0;
     if (((ret=order_pages(s)) != OK) || ((ret=check_order(s)) != OK) ||
-        ((ret=init_data(s)) != OK) || (ret=gc(s))) {
-            return ret;
+            ((ret=init_data(s)) != OK) || (ret=gc(s))) {
+        return ret;
     }
     return OK;
 }
@@ -784,11 +741,7 @@ int veeprom_status_release(veeprom_status *vstatus) {
 
     rb_release_tree(vstatus->page_order);
 
-#ifdef CHIBIOS_ON
-    chPoolFree(&veeprom_status_pool, (void*)vstatus);
-#else
-    free(vstatus);
-#endif
+    VEEPROM_Dealloc(veeprom_status, vstatus);
 
     vstatus = NULL;
     return OK;
@@ -796,12 +749,7 @@ int veeprom_status_release(veeprom_status *vstatus) {
 
 
 veeprom_status *veeprom_create_status() {
-    return
-#ifdef CHIBIOS_ON
-    chPoolAlloc(&veeprom_status_pool);
-#else
-    malloc(sizeof(veeprom_status));
-#endif
+    return VEEPROM_Alloc(veeprom_status);
 }
 
 
@@ -884,7 +832,7 @@ static int alloc_space(vrw_cursor *cursor) {
                 vpage_status *p = (vpage_status*)cursor->virtpage->data;
                 VEEPROM_THROW(p != NULL, ERROR_NULLPTR);
                 cursor->p_cur = cursor->p_start_page + FLASH_PAGE_SIZE_2B -
-                    p->free_space/2;
+                        p->free_space/2;
                 return OK;
             }
         }
@@ -987,13 +935,13 @@ static int erase_receiving(veeprom_status *vstatus) {
         case PAGE_VALID:
             return OK;
         case PAGE_RECEIVING:
-            {
-                rbnode *prev = rb_prev_node(page_order, node);
-                int ret = remove_page(p, node, pstatus, vstatus);
-                VEEPROM_THROW(ret == OK, ret);
-                node = prev;
-            }
-            continue;
+        {
+            rbnode *prev = rb_prev_node(page_order, node);
+            int ret = remove_page(p, node, pstatus, vstatus);
+            VEEPROM_THROW(ret == OK, ret);
+            node = prev;
+        }
+        continue;
         default:
             VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
         }
@@ -1045,8 +993,8 @@ write_data(uint16_t id, uint8_t *data, uint16_t length,
             d = (*(data + length - 1));
         else
             d = (*(data + length - 2)) | (*(data + length - 1) << 8); //LE
-        VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
-        move_forward(cursor);
+            VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
+            move_forward(cursor);
     }
 
     VEEPROM_THROW((ret=write_2b(cursor->cur_checksum, cursor)) == OK, ret);
@@ -1153,7 +1101,7 @@ static void iter_length(vrw_cursor *cursor) {
 static void iter_data_chunks(vrw_cursor *cursor) {
     if (cursor->rw_ops == 2)
         cursor->cur_checksum =
-            (cursor->data->id) ^ (cursor->data->length);
+                (cursor->data->id) ^ (cursor->data->length);
 
     if (cursor->rw_ops - 2 < cursor->aligned_length_2b) {
         cursor->cur_checksum ^= *(cursor->p_cur);
@@ -1265,5 +1213,3 @@ int veeprom_delete(uint16_t id, veeprom_status *vstatus) {
     VEEPROM_THROW((ret=gc(vstatus)) == OK, ret);
     return OK;
 }
-
-#undef ERROR_RET

@@ -21,9 +21,9 @@
 #include <unistd.h>
 #include <string.h>
 #include "eeprom.h"
-#include "examine.h"
 #include "errnum.h"
 #include "errmsg.h"
+#include "wrappers.h"
 #include "gen_testcases.h"
 #include <fcntl.h>
 
@@ -128,7 +128,7 @@ void print_tree(rbtree *tree, rbnode *node, void (*print_data)(rbnode*)) {
 
 
 int cmp_int(void *pdata1, void *pdata2) {
-    COND_ERROR_RET((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
+    VEEPROM_THROW((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
 
     int v1 = *((int*)pdata1);
     int v2 = *((int*)pdata2);
@@ -149,21 +149,21 @@ int verify_rbtree_1(alloc_res *a) {
         int *data = malloc(sizeof(int));
         *data = i;
         rbnode *node = rb_create_node();
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         node->data = data;
         tree = rb_insert_node(tree, node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
     i = 0;
     for (; i < 2; i++) {
         rbnode *node = rb_search_node(tree, &i);
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         free(node->data);
         tree = rb_delete_node(tree, node);
         free(node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
@@ -172,21 +172,21 @@ int verify_rbtree_1(alloc_res *a) {
         int *data = malloc(sizeof(int));
         *data = i;
         rbnode *node = rb_create_node();
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         node->data = data;
         tree = rb_insert_node(tree, node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
     i = 3;
     for (; i < 5; i++) {
         rbnode *node = rb_search_node(tree, &i);
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         free(node->data);
         tree = rb_delete_node(tree, node);
         free(node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
@@ -195,21 +195,21 @@ int verify_rbtree_1(alloc_res *a) {
         int *data = malloc(sizeof(int));
         *data = i;
         rbnode *node = rb_create_node();
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         node->data = data;
         tree = rb_insert_node(tree, node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
     i = 6;
     for (; i < 8; i++) {
         rbnode *node = rb_search_node(tree, &i);
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         free(node->data);
         tree = rb_delete_node(tree, node);
         free(node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
@@ -219,21 +219,21 @@ int verify_rbtree_1(alloc_res *a) {
         int *data = malloc(sizeof(int));
         *data = i;
         rbnode *node = rb_create_node();
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         node->data = data;
         tree = rb_insert_node(tree, node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
     i = 9;
     for (; i < 10; i++) {
         rbnode *node = rb_search_node(tree, &i);
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
         free(node->data);
         tree = rb_delete_node(tree, node);
         free(node);
-        COND_ERROR_RET(tree != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(tree != NULL, ERROR_NULLPTR);
         print_tree(tree, tree->root, &print_int);
     }
 
@@ -249,21 +249,21 @@ int verify_rbtree_1(alloc_res *a) {
 
 
 int create_vstatus(alloc_res *a) {
-    COND_ERROR_RET(a->mapped_mem != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(a->mapped_mem != NULL, ERROR_NULLPTR);
     veeprom_status *vstatus = veeprom_create_status();
-    COND_ERROR_RET(vstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus != NULL, ERROR_NULLPTR);
     a->vstatus = vstatus;
     int ret = veeprom_status_init(vstatus, a->mapped_mem);
-    COND_ERROR_RET(ret == OK, ret);
-    COND_ERROR_RET(vstatus->page_order != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET(vstatus->ids != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET(vstatus->page_order != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET(vstatus->flash_start == a->mapped_mem,
+    VEEPROM_THROW(ret == OK, ret);
+    VEEPROM_THROW(vstatus->page_order != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus->ids != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus->page_order != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem,
             ERROR_VALUE);
 
     int i = 0;
     for (i = 0; i < FLASH_PAGE_COUNT; i++) {
-         COND_ERROR_RET(vstatus->busy_map[i] == -1,
+         VEEPROM_THROW(vstatus->busy_map[i] == -1,
                 ERROR_DCNSTY);
     }
 
@@ -272,106 +272,139 @@ int create_vstatus(alloc_res *a) {
 
 int init_flash(alloc_res *a) {
     int ret = OK;
-    a->fd = open("./testcases/tmp_testcase", O_RDWR); 
-    COND_ERROR_RET(a->fd != -1, ERROR_SYSTEM);
+    a->fd = open("./testcases/tmp_testcase", O_RDWR);
+    VEEPROM_THROW(a->fd != -1, ERROR_SYSTEM);
     a->mapped_mem = flash_init(a->fd);
-    COND_ERROR_RET(a->mapped_mem != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET((ret = create_vstatus(a)) == OK, ret);
+    VEEPROM_THROW(a->mapped_mem != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW((ret = create_vstatus(a)) == OK, ret);
     ret = veeprom_init(a->vstatus);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     return OK;
 }
 
+
+/*
+ * Verification of correct inititalization in the case
+ * of clear flash (all pages are ERASED and not contaning data).
+ */
 int verify_clear(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     veeprom_status *vstatus = a->vstatus;
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i,
+        VEEPROM_THROW(vstatus->busy_map[i] == i,
                 ERROR_DCNSTY);
     }
-    COND_ERROR_RET(vstatus->ids->root == vstatus->ids->nullnode, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->page_order->root == vstatus->page_order->nullnode, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->flash_start == a->mapped_mem,
+    VEEPROM_THROW(vstatus->ids->root == vstatus->ids->nullnode, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->page_order->root == vstatus->page_order->nullnode, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem,
             ERROR_VALUE);
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->next_alloc == 0, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 0, ERROR_VALUE);
 
     return OK;
 }
 
 
+/*
+ * Verify that after initialization of empty flash with
+ * three pages having RECEIVING states, vstatus:
+ * 1. was correctly initialized;
+ * 2. the next allocated page is the maximum of
+ * the three virtual numbers of RECEIVING pages plus 1.
+ */
 int verify_2(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
-    
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i,
+        VEEPROM_THROW(vstatus->busy_map[i] == i,
                 ERROR_DCNSTY);
     }
-    COND_ERROR_RET(vstatus->ids->root == vstatus->ids->nullnode,
+    VEEPROM_THROW(vstatus->ids->root == vstatus->ids->nullnode,
             ret);
-    COND_ERROR_RET(vstatus->page_order->root == vstatus->page_order->nullnode,
+    VEEPROM_THROW(vstatus->page_order->root == vstatus->page_order->nullnode,
             ERROR_VALUE);
-    COND_ERROR_RET(vstatus->flash_start == a->mapped_mem,
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem,
             ERROR_VALUE);
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
 
 
+/*
+ * Verify that after initialization of empty flash with
+ * three pages having RECEIVING states, vstatus:
+ * 1. was correctly initialized;
+ * 2. the next allocated page is the maximum of
+ * the three virtual numbers of RECEIVING pages plus 1.
+ */
 int verify_3(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     veeprom_status *vstatus = a->vstatus;
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i,
+        VEEPROM_THROW(vstatus->busy_map[i] == i,
                 ERROR_DCNSTY);
     }
-    COND_ERROR_RET(vstatus->ids->root == vstatus->ids->nullnode, ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->page_order->root == vstatus->page_order->nullnode, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->flash_start == a->mapped_mem, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_VALUE);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->ids->root == vstatus->ids->nullnode, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->page_order->root == vstatus->page_order->nullnode, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
 
 
+/*
+ * Verify that after initialization of empty flash with
+ * three pages having RECEIVING states and one page having
+ * VALID state and not having data, vstatus:
+ * 1. was correctly initialized;
+ * 2. the next allocated page is the maximum of
+ * the three virtual numbers of RECEIVING pages plus 1
+ * 3. the page that being VALID is set to ERASED
+ */
 int verify_4(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
-
+    VEEPROM_THROW(vstatus->ids->root == vstatus->ids->nullnode, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->page_order->root == vstatus->page_order->nullnode, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_5(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->flash_start == a->mapped_mem, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
+
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -379,19 +412,19 @@ int verify_5(alloc_res *a) {
 
 int verify_6(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -399,19 +432,19 @@ int verify_6(alloc_res *a) {
 
 int verify_7(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 0, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 0, ERROR_VALUE);
 
     return OK;
 }
@@ -419,19 +452,19 @@ int verify_7(alloc_res *a) {
 
 int verify_8(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -439,32 +472,32 @@ int verify_8(alloc_res *a) {
 
 int verify_9(alloc_res *a) {
     int ret = OK;
-    a->fd = open("./testcases/tmp_testcase", O_RDWR); 
-    COND_ERROR_RET(a->fd != -1, ERROR_SYSTEM);
+    a->fd = open("./testcases/tmp_testcase", O_RDWR);
+    VEEPROM_THROW(a->fd != -1, ERROR_SYSTEM);
     a->mapped_mem = flash_init(a->fd);
-    COND_ERROR_RET(a->mapped_mem != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET((ret = create_vstatus(a)) == OK, ret);
+    VEEPROM_THROW(a->mapped_mem != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW((ret = create_vstatus(a)) == OK, ret);
     ret = veeprom_init(a->vstatus);
-    COND_ERROR_RET(ret == ERROR_DFG, ret);
+    VEEPROM_THROW(ret == ERROR_DFG, ret);
     return OK;
 }
 
 
 int verify_10(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -473,19 +506,19 @@ int verify_10(alloc_res *a) {
 
 int verify_11(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -493,44 +526,44 @@ int verify_11(alloc_res *a) {
 
 int verify_12(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 1,
+    VEEPROM_THROW(vstatus->busy_pages == 1,
             ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 44)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 44, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 1014, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 44, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 1014, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 0,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+2) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+2) == 243,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -538,43 +571,43 @@ int verify_12(alloc_res *a) {
 
 int verify_13(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 1,
+    VEEPROM_THROW(vstatus->busy_pages == 1,
             ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 44)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 44, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 40, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 974, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 44, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 40, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 974, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 0,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+2) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+2) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -582,42 +615,42 @@ int verify_13(alloc_res *a) {
 
 int verify_14(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 1, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 100)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 100, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 1014, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 100, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 1014, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 0,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+2) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+2) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 101, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 101, ERROR_VALUE);
 
     return OK;
 }
@@ -625,19 +658,19 @@ int verify_14(alloc_res *a) {
 
 int verify_15(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -645,19 +678,19 @@ int verify_15(alloc_res *a) {
 
 int verify_16(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -665,25 +698,25 @@ int verify_16(alloc_res *a) {
 
 int verify_17(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root == tree->nullnode,
+    VEEPROM_THROW(tree->root == tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data == NULL,
+    VEEPROM_THROW(tree->root->data == NULL,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
 
     return OK;
 }
@@ -691,212 +724,212 @@ int verify_17(alloc_res *a) {
 
 int verify_18(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_19(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_20(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root == tree->nullnode,
+    VEEPROM_THROW(tree->root == tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data == NULL,
+    VEEPROM_THROW(tree->root->data == NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_21(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 1,
+    VEEPROM_THROW(vstatus->busy_pages == 1,
             ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 44)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 44, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 1012, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 44, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 1012, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
 
     uint16_t *page = vstatus->flash_start +
         FLASH_PAGE_SIZE_2B * 44;
-    COND_ERROR_RET(*page == 0,
+    VEEPROM_THROW(*page == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 1) == 0,
+    VEEPROM_THROW(*(page + 1) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 2) == 243,
+    VEEPROM_THROW(*(page + 2) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 3) == 1,
+    VEEPROM_THROW(*(page + 3) == 1,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 4) == 0,
+    VEEPROM_THROW(*(page + 4) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 5) == 242,
+    VEEPROM_THROW(*(page + 5) == 242,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 6) == 0xFFFF,
+    VEEPROM_THROW(*(page + 6) == 0xFFFF,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_22(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 1,
+    VEEPROM_THROW(vstatus->busy_pages == 1,
             ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 44)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 44, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 40, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 972, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 44, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 40, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 972, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
-            ERROR_DCNSTY);
-
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 243,
-            ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 1,
-            ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+2) == 0,
-            ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+3) == 242,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 243,
+            ERROR_DCNSTY);
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 1,
+            ERROR_DCNSTY);
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+2) == 0,
+            ERROR_DCNSTY);
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+3) == 242,
+            ERROR_DCNSTY);
+
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_23(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 1, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 100)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 100, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 1012, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 100, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 1012, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 243,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 1,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 1,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+2) == 0,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+2) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+3) == 242,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+3) == 242,
             ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 101, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 101, ERROR_VALUE);
 
     return OK;
 }
@@ -904,364 +937,364 @@ int verify_23(alloc_res *a) {
 
 int verify_24(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_25(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_26(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root == tree->nullnode,
+    VEEPROM_THROW(tree->root == tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data == NULL,
+    VEEPROM_THROW(tree->root->data == NULL,
             ERROR_DCNSTY);
 
     uint16_t *page = vstatus->flash_start +
         FLASH_PAGE_SIZE_2B * 44;
-    COND_ERROR_RET(*page == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 1) == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 508) == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 509) == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 510) == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 511) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*page == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*(page + 1) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*(page + 508) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*(page + 509) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*(page + 510) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(*(page + 511) == 0xFFFF, ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_27(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 1, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 43)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 43, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 43, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 0, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
 
     uint16_t *page = vstatus->flash_start +
         FLASH_PAGE_SIZE_2B * 43;
-    COND_ERROR_RET(*page == 0,
+    VEEPROM_THROW(*page == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 1) == 0,
+    VEEPROM_THROW(*(page + 1) == 0,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 2) == 243,
+    VEEPROM_THROW(*(page + 2) == 243,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 3) == 1014,
+    VEEPROM_THROW(*(page + 3) == 1014,
             ERROR_DCNSTY);
 
     i = 0;
     for (; i < 507; i++) {
         uint16_t expected = i;
         uint16_t actual = *(page + 4 + i);
-        COND_ERROR_RET(expected == actual, ERROR_DCNSTY);
+        VEEPROM_THROW(expected == actual, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(*(page + 511) == 0x02FE, ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(*(page + 511) == 0x02FE, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_28(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root == tree->nullnode,
+    VEEPROM_THROW(tree->root == tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data == NULL,
+    VEEPROM_THROW(tree->root->data == NULL,
             ERROR_DCNSTY);
 
     uint16_t *page = vstatus->flash_start +
         FLASH_PAGE_SIZE_2B * 43;
-    COND_ERROR_RET(*page == 0xFFFF,
+    VEEPROM_THROW(*page == 0xFFFF,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 1) == 0xFFFF,
+    VEEPROM_THROW(*(page + 1) == 0xFFFF,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(page + 2) == 0xFFFF,
+    VEEPROM_THROW(*(page + 2) == 0xFFFF,
             ERROR_DCNSTY);
 
     i = 0;
     for (; i < 508; i++) {
-        COND_ERROR_RET(*(page + 3 + i) == 0xFFFF, ERROR_DCNSTY);
+        VEEPROM_THROW(*(page + 3 + i) == 0xFFFF, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(*(page + 511) == 0xFFFF, ERROR_DCNSTY);
-    COND_ERROR_RET(vstatus->next_alloc == 100, ERROR_VALUE);
+    VEEPROM_THROW(*(page + 511) == 0xFFFF, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->next_alloc == 100, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_29(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 3, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 3, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 100 || i == 32 || i == 1)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 100, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 100, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 0, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 32, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 32, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 0, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 2, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 984, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 2, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 984, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     rbtree *tree = vstatus->ids;
-    COND_ERROR_RET(tree->root != tree->nullnode,
+    VEEPROM_THROW(tree->root != tree->nullnode,
             ERROR_DCNSTY);
-    COND_ERROR_RET(tree->root->data != NULL,
+    VEEPROM_THROW(tree->root->data != NULL,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p) == 123,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p) == 123,
             ERROR_DCNSTY);
-    COND_ERROR_RET(*(((vdata*)tree->root->data)->p+1) == 2069,
+    VEEPROM_THROW(*(((vdata*)tree->root->data)->p+1) == 2069,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 101, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 101, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_30(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 0, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
-    COND_ERROR_RET(vstatus->page_order->root ==
+    VEEPROM_THROW(vstatus->page_order->root ==
             vstatus->page_order->nullnode, ERROR_VALUE);
 
-    COND_ERROR_RET(vstatus->next_alloc == 101, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 101, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_31(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
 
-    COND_ERROR_RET(vstatus->busy_pages == 4, ERROR_DCNSTY);
+    VEEPROM_THROW(vstatus->busy_pages == 4, ERROR_DCNSTY);
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
         if (i == 24 || i == 12 || i == 14 || i == 1)
-            COND_ERROR_RET(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
         else
-            COND_ERROR_RET(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+            VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     vpage_status *pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 24, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 984, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 24, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 984, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 12, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 12, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 0, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 2, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 14, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 2, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 14, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 0, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
-    COND_ERROR_RET(n->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, n), ERROR_NULLPTR);
+    VEEPROM_THROW(n->data != NULL, ERROR_NULLPTR);
     pstatus = (vpage_status*)n->data;
-    COND_ERROR_RET(pstatus->counter == 3, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->physnum == 1, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->fragments == 0, ERROR_DCNSTY);
-    COND_ERROR_RET(pstatus->free_space == 1014, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->counter == 3, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->physnum == 1, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->fragments == 0, ERROR_DCNSTY);
+    VEEPROM_THROW(pstatus->free_space == 1014, ERROR_DCNSTY);
 
     n = rb_next_node(vstatus->page_order, n);
-    COND_ERROR_RET(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
+    VEEPROM_THROW(rb_is_nullnode(vstatus->page_order, n), ERROR_DCNSTY);
 
     vdata_adapter data;
     data.p = &data.id;
     data.id = 12345;
     rbnode *node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node == vstatus->ids->nullnode,
+    VEEPROM_THROW(node == vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 123;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 456;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 1;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 12;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 12777;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
     data.id = 888;
     node = rb_search_node(vstatus->ids, &data);
-    COND_ERROR_RET(node != vstatus->ids->nullnode,
+    VEEPROM_THROW(node != vstatus->ids->nullnode,
             ERROR_DCNSTY);
 
-    COND_ERROR_RET(vstatus->next_alloc == 25, ERROR_VALUE);
+    VEEPROM_THROW(vstatus->next_alloc == 25, ERROR_VALUE);
     return OK;
 }
 
 
 int verify_32(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
     int id1 = 123;
@@ -1276,17 +1309,17 @@ int verify_32(alloc_res *a) {
     i = 0;
     for (; i < 43690; i++) {
         ret = veeprom_write(id1, data, length, vstatus);
-        COND_ERROR_RET_F(ret == OK, ret, free(data));
+        VEEPROM_THROW(ret == OK, ret, free(data));
         ret = veeprom_write(id2, data, length, vstatus);
-        COND_ERROR_RET_F(ret == OK, ret, free(data));
+        VEEPROM_THROW(ret == OK, ret, free(data));
         ret = veeprom_write(id3, data, length, vstatus);
-        COND_ERROR_RET_F(ret == OK, ret, free(data));
+        VEEPROM_THROW(ret == OK, ret, free(data));
     }
 
     ret = veeprom_write(id1, data, length, vstatus);
-    COND_ERROR_RET_F(ret == OK, ret, free(data));
+    VEEPROM_THROW(ret == OK, ret, free(data));
     ret = veeprom_write(id2, data, length, vstatus);
-    COND_ERROR_RET_F(ret == ERROR_FLEXP, ERROR_EFAIL, free(data));
+    VEEPROM_THROW(ret == ERROR_FLEXP, ERROR_EFAIL, free(data));
 
     free(data);
     return OK;
@@ -1295,8 +1328,8 @@ int verify_32(alloc_res *a) {
 
 int verify_33(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
     int id1 = 123;
@@ -1312,10 +1345,10 @@ int verify_33(alloc_res *a) {
     i = 0;
     for (; i < 123; i++) {
         ret = veeprom_write(id1, data, length, vstatus);
-        COND_ERROR_RET_F(ret == OK, ret, free(data));
+        VEEPROM_THROW(ret == OK, ret, free(data));
     }
     ret = veeprom_write(id1, data, length, vstatus);
-    COND_ERROR_RET_F(ret == ERROR_NOMEM, ret, free(data));
+    VEEPROM_THROW(ret == ERROR_NOMEM, ret, free(data));
     free(data);
 
     return OK;
@@ -1324,7 +1357,7 @@ int verify_33(alloc_res *a) {
 
 int verify_34(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
 
     int length = 1;
@@ -1333,14 +1366,14 @@ int verify_34(alloc_res *a) {
     int i = 1;
     for (; i < 16257; i++) {
         ret = veeprom_write(i, &data[0], length, vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
     }
     ret = veeprom_write(i, &data[0], length, vstatus);
-    COND_ERROR_RET(ret == ERROR_NOMEM, ret);
+    VEEPROM_THROW(ret == ERROR_NOMEM, ret);
     i = 1;
     for (; i < 16257; i++) {
         ret = veeprom_delete(i, vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
     }
 
 
@@ -1350,8 +1383,8 @@ int verify_34(alloc_res *a) {
 
 int verify_35(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
- 
+    VEEPROM_THROW(ret == OK, ret);
+
     veeprom_status *vstatus = a->vstatus;
 
     int id = 123;
@@ -1359,9 +1392,9 @@ int verify_35(alloc_res *a) {
     uint8_t *data = malloc(length);
     memset((void*)data, 3, length);
     ret = veeprom_write(id, &data[0], length, vstatus);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     ret = veeprom_write(id, &data[0], length, vstatus);
-    COND_ERROR_RET(ret == ERROR_NOMEM, ret);
+    VEEPROM_THROW(ret == ERROR_NOMEM, ret);
     free(data);
 
     return OK;
@@ -1370,7 +1403,7 @@ int verify_35(alloc_res *a) {
 
 int verify_36(alloc_res *a) {
     int ret = init_flash(a);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     veeprom_status *vstatus = a->vstatus;
 
     int id = 1;
@@ -1380,7 +1413,7 @@ int verify_36(alloc_res *a) {
     for (; id < 86; id++) {
         memset((void*)data, id, length);
         ret = veeprom_write(id, &data[0], length, vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
     }
     free(data);
 
@@ -1390,8 +1423,8 @@ int verify_36(alloc_res *a) {
 
 int unlink_testcase(const char *filename) {
     int ret = 0;
-    if ((ret = unlink("testcases/tmp_testcase")) != 0) {
-        ERROR_TRET("unlink testcase failed", ret);
+    if ((ret = unlink(filename)) != 0) {
+        VEEPROM_LOGERROR("unlink %s (%d)", filename, ret);
     }
     return OK;
 }
@@ -1462,15 +1495,14 @@ int main() {
     const char *tmp = "./testcases/tmp_testcase";
     for (; i < size; i++) {
         reset(a);
-        int size = ARRAY_SIZE(VERIFICATION_SUITE);
         fprintf(stderr, "Running %s\n", VERIFICATION_SUITE[i].descr);
         if (VERIFICATION_SUITE[i].p_gen_testcase != NULL) {
-            ret = VERIFICATION_SUITE[i].p_gen_testcase(tmp);
-            if (ret != OK) {
-                ERROR(emsg(ret));
-                fprintf(stderr, "testcase generation failed\n\n");
-                continue;
-            }
+            VEEPROM_TRACE(
+                    (ret = VERIFICATION_SUITE[i].p_gen_testcase(tmp)) == OK,
+                    ret,
+                    fprintf(stderr, "testcase generation failed\n\n");
+                    continue;
+                    );
         }
         if (VERIFICATION_SUITE[i].p_verify == NULL) {
             fprintf(stderr, "verify function not found");
@@ -1485,17 +1517,17 @@ int main() {
             failed++;
             fprintf(stderr, "FAILED\n");
         }
-        
-        COND_ERROR((ret=veeprom_status_release(a->vstatus)) == OK, emsg(ret));
 
-        if (a->mapped_mem != NULL) 
-            COND_ERROR((ret = flash_uninit(a->mapped_mem)) == OK, emsg(ret));
+        VEEPROM_TRACE((ret=veeprom_status_release(a->vstatus)) == OK, ret);
+
+        if (a->mapped_mem != NULL)
+            VEEPROM_TRACE((ret = flash_uninit(a->mapped_mem)) == OK, ret);
 
         if (a->fd != -1)
-            COND_ERROR((ret = close(a->fd)) == 0, emsg(ERROR_SYSTEM));
- 
+            VEEPROM_TRACE((ret = close(a->fd)) == 0, ERROR_SYSTEM);
+
         if (VERIFICATION_SUITE[i].p_gen_testcase != NULL)
-            COND_ERROR((ret=unlink_testcase(tmp)) == OK, emsg(ret));
+            VEEPROM_TRACE((ret=unlink_testcase(tmp)) == OK, ret);
 
         fprintf(stderr, "\n");
     }

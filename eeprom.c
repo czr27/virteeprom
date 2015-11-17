@@ -20,7 +20,7 @@
 #include <string.h>
 #include "rbtree.h"
 #include "eeprom.h"
-#include "examine.h"
+#include "wrappers.h"
 #include "errnum.h"
 #include "errmsg.h"
 
@@ -96,8 +96,7 @@ static inline int is_replay(vrw_cursor *cursor) {
 
 static uint16_t
 *get_page(vpage_status *pstatus, struct veeprom_status *vstatus) {
-    COND_ERROR_RET2(pstatus != NULL && vstatus != NULL,
-            emsg(ERROR_NULLPTR), NULL);
+    VEEPROM_TRACE(pstatus != NULL && vstatus != NULL, ERROR_NULLPTR);
     return vstatus->flash_start + pstatus->physnum * FLASH_PAGE_SIZE_2B;
 }
 
@@ -266,7 +265,8 @@ remove_page(uint16_t *page, rbnode *node, vpage_status *pstatus,
 
 
 static int move_cursor(rbnode *node, vrw_cursor *cursor) {
-    COND_ERROR_RET(cursor->vstatus != NULL && node != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(cursor->vstatus != NULL && node != NULL, ERROR_NULLPTR);
+
     cursor->virtpage = node;
     uint16_t *page = get_page((vpage_status*)node->data, cursor->vstatus);
     cursor->p_start_page = page;
@@ -290,19 +290,19 @@ static int end_of_page(vrw_cursor *cursor) {
 
 static int
 move_valid_data(rbnode *node, veeprom_status *vstatus) {
-    COND_ERROR_RET(vstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus != NULL, ERROR_NULLPTR);
     vrw_cursor *rcursor = create_cursor();
     init_cursor(rcursor, vstatus);
     int ret = move_cursor(node, rcursor);
-    COND_ERROR_RET_F(ret == OK, ret, release_cursor(rcursor));
+    VEEPROM_THROW(ret == OK, ret, release_cursor(rcursor));
     set_replay(rcursor);
 
     for (; !end_of_page(rcursor); move_forward(rcursor)) {
-        COND_ERROR_RET_F((ret=iter_data(rcursor)) == OK, ret,
+        VEEPROM_THROW((ret=iter_data(rcursor)) == OK, ret,
                 release_cursor(rcursor));
         switch (get_data_status(rcursor)) {
         case VRW_OK:
-            COND_ERROR_RET_F((ret=_veeprom_write(rcursor->data->id,
+            VEEPROM_THROW((ret=_veeprom_write(rcursor->data->id,
                             (uint8_t*)(rcursor->data->p_start_data + 2),
                             *(rcursor->data->p_start_data + 1),
                             vstatus)) == OK, ret,
@@ -311,9 +311,9 @@ move_valid_data(rbnode *node, veeprom_status *vstatus) {
             continue;
         case VRW_FAILED:
             release_cursor(rcursor);
-            ERROR_RET(ERROR_DCNSTY);
+            VEEPROM_THROW(0, ERROR_DCNSTY);
         default:
-            COND_ERROR_RET_F(check_page_finished(rcursor),
+            VEEPROM_THROW(check_page_finished(rcursor),
             ERROR_DCNSTY, release_cursor(rcursor));
                 break;
         }
@@ -333,7 +333,7 @@ has_no_data(vpage_status *pstatus) {
 
 static inline int
 is_fragmented(vpage_status *pstatus) {
-    COND_ERROR_RET(pstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(pstatus != NULL, ERROR_NULLPTR);
     int half = (FLASH_PAGE_SIZE - VEEPROM_PAGE_HEADER) / 2;
     if (pstatus->fragments < half)
         return 0;
@@ -342,17 +342,17 @@ is_fragmented(vpage_status *pstatus) {
 
 
 static int gc(veeprom_status *vstatus) {
-    COND_ERROR_RET(vstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus != NULL, ERROR_NULLPTR);
     rbnode *node = rb_min_node(vstatus->page_order, vstatus->page_order->root);
     while (!rb_is_nullnode(vstatus->page_order, node)) {
-        COND_ERROR_RET(node->data != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node->data != NULL, ERROR_NULLPTR);
         vpage_status *pstatus = (vpage_status*)node->data;
         if (has_no_data(pstatus)) {
             ;
         } else if (is_fragmented(pstatus) &&
                 vstatus->busy_pages < VEEPROM_PAGE_COUNT) {
             int ret = move_valid_data(node, vstatus);
-            COND_ERROR_RET(ret == OK, ret);
+            VEEPROM_THROW(ret == OK, ret);
         } else {
             node = rb_next_node(vstatus->page_order, node);
             continue;
@@ -361,7 +361,7 @@ static int gc(veeprom_status *vstatus) {
         uint16_t *page = get_page(pstatus, vstatus);
         rbnode *next = rb_next_node(vstatus->page_order, node);
         int ret = remove_page(page, node, pstatus, vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
         node = next;
     }
     return OK;
@@ -372,7 +372,7 @@ static int
 erase_data(vrw_cursor *cursor) {
     check_cursor(cursor);
     vrw_cursor *prev_cursor = create_cursor();
-    COND_ERROR_RET(prev_cursor != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(prev_cursor != NULL, ERROR_NULLPTR);
     copy_location(cursor, prev_cursor);
 
     int ret = OK;
@@ -381,15 +381,15 @@ erase_data(vrw_cursor *cursor) {
         if (cursor->p_cur == cursor->p_start_page + 1) {
             rbtree *page_order = cursor->vstatus->page_order;
             rbnode *n = rb_prev_node(page_order, cursor->virtpage);
-            COND_ERROR_RET_F(!rb_is_nullnode(page_order, n),
+            VEEPROM_THROW(!rb_is_nullnode(page_order, n),
                     ERROR_NULLPTR, release_cursor(prev_cursor));
             ret = move_cursor(n, cursor);
-            COND_ERROR_RET_F(ret == OK, ret, release_cursor(prev_cursor));
+            VEEPROM_THROW(ret == OK, ret, release_cursor(prev_cursor));
             cursor->p_cur = cursor->p_start_page + FLASH_PAGE_SIZE_2B - 1;
         }
 
         if ((ret = flash_zero_short(cursor->p_cur)) != OK) {
-            DEBUG_MSG("flash_zero_short ret=%d", ret);
+            VEEPROM_LOGDEBUG("flash_zero_short ret=%d\n", ret);
             copy_location(prev_cursor, cursor);
             release_cursor(prev_cursor);
             return ret;
@@ -427,13 +427,13 @@ static inline int check_cursor_status(vrw_cursor *cursor) {
 
 
 static int check_cursor(vrw_cursor *cursor) {
-    COND_ERROR_RET(cursor != NULL && cursor->vstatus != NULL &&
+    VEEPROM_THROW(cursor != NULL && cursor->vstatus != NULL &&
             cursor->virtpage != NULL &&
             cursor->data != NULL &&
             cursor->p_cur != NULL &&
             cursor->data->p_start_data != NULL &&
             cursor->data->p_end_data != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET(cursor->p_start_page <= cursor->p_cur &&
+    VEEPROM_THROW(cursor->p_start_page <= cursor->p_cur &&
             cursor->p_end_page >= cursor->p_cur &&
             check_cursor_status(cursor) == 1, ERROR_DCNSTY);
     return OK;
@@ -458,7 +458,7 @@ static int
 order_valid_page(int physnum, uint16_t *page, veeprom_status *vstatus) {
     int ret = OK;
     uint16_t counter = *(page + 1);
-    COND_ERROR_RET(counter < VEEPROM_MAX_VIRTNUM, ERROR_OBNDS);
+    VEEPROM_THROW(counter < VEEPROM_MAX_VIRTNUM, ERROR_OBNDS);
 
     vpage_status *pstatus_prev = get_pstatus(vstatus, counter);
     if (pstatus_prev != NULL) {
@@ -469,20 +469,18 @@ order_valid_page(int physnum, uint16_t *page, veeprom_status *vstatus) {
 
         if (free_space_prev > free_space) {
             ret = erase_page(page, NULL, vstatus);
-            COND_ERROR_RET(ret == OK, ret);
+            VEEPROM_THROW(ret == OK, ret);
             vstatus->busy_map[physnum] = physnum;
             return ret;
         } else if (free_space_prev < free_space) {
-            COND_ERROR_RET((ret=erase_page(page_prev, NULL,
-                            vstatus)) == OK,
-                    ret);
+            VEEPROM_THROW((ret=erase_page(page_prev, NULL, vstatus)) == OK, ret);
             vstatus->busy_map[pstatus_prev->physnum] = pstatus_prev->physnum;
         } else {
-            ERROR_RET(ERROR_DFG);
+            VEEPROM_THROW(0, ERROR_DFG);
         }
     } else {
         int busy_pages = vstatus->busy_pages;
-        COND_ERROR_RET(++busy_pages < VEEPROM_PAGE_COUNT, ERROR_NOMEM);
+        VEEPROM_THROW(++busy_pages < VEEPROM_PAGE_COUNT, ERROR_NOMEM);
         pstatus_prev = create_pstatus();
         pstatus_prev->counter = counter;
         rbnode *node = rb_create_node();
@@ -531,10 +529,10 @@ static int locate(vrw_cursor *cursor) {
         FLASH_PAGE_SIZE_2B;
 
     int16_t status = get_page_status(cursor->p_start_page);
-    COND_ERROR_RET(status == PAGE_VALID, ERROR_DCNSTY);
+    VEEPROM_THROW(status == PAGE_VALID, ERROR_DCNSTY);
     int16_t counter = *(cursor->p_start_page + 1);
     rbnode *v = rb_search_node(vstatus->page_order, (void*)&counter);
-    COND_ERROR_RET(v != NULL && v->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(v != NULL && v->data != NULL, ERROR_NULLPTR);
     cursor->virtpage = v;
 
     return OK;
@@ -543,29 +541,29 @@ static int locate(vrw_cursor *cursor) {
 
 static int remove_data(vrw_cursor *rcursor, uint16_t id) {
     int ret = OK;
-    COND_ERROR_RET((ret=locate(rcursor)) == OK, ret);
+    VEEPROM_THROW((ret=locate(rcursor)) == OK, ret);
     set_replay(rcursor);
 
     rbtree *page_order = rcursor->vstatus->page_order;
     while (!rb_is_nullnode(page_order, rcursor->virtpage)) {
-        COND_ERROR_RET((ret=iter_data(rcursor)) == OK, ret);
+        VEEPROM_THROW((ret=iter_data(rcursor)) == OK, ret);
         switch (get_data_status(rcursor)) {
         case VRW_OK:
-            COND_ERROR_RET(rcursor->data->id == id, ERROR_DCNSTY);
-            COND_ERROR_RET((ret=erase_data(rcursor)) == OK, ret);
+            VEEPROM_THROW(rcursor->data->id == id, ERROR_DCNSTY);
+            VEEPROM_THROW((ret=erase_data(rcursor)) == OK, ret);
             return OK;
         case VRW_FAILED:
-            ERROR_RET(ERROR_DCNSTY);
+            VEEPROM_THROW(0, ERROR_DCNSTY);
         default:
-            COND_ERROR_RET(check_page_finished(rcursor), ERROR_DCNSTY);
+            VEEPROM_THROW(check_page_finished(rcursor), ERROR_DCNSTY);
             break;
         }
         rcursor->virtpage = rb_next_node(page_order, rcursor->virtpage);
         ret = move_cursor(rcursor->virtpage, rcursor);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
     }
 
-    ERROR_RET(ERROR_UNKNOWN);
+    VEEPROM_THROW(0, ERROR_UNKNOWN);
 }
 
 
@@ -582,7 +580,7 @@ static int add_data(vrw_cursor *cursor) {
         ret = remove_data(rcursor, cursor->data->id);
         if (ret != OK) {
             release_cursor(rcursor);
-            ERROR_RET(ret);
+            VEEPROM_THROW(0, ret);
         }
         copy_vdata(cursor, node);
         release_cursor(rcursor);
@@ -599,26 +597,26 @@ static int add_data(vrw_cursor *cursor) {
 static int init_page(vrw_cursor *cursor) {
     do {
         int ret = iter_data(cursor);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
 
         switch (get_data_status(cursor)) {
         case VRW_OK:
-            COND_ERROR_RET((ret=add_data(cursor)) == OK, ret);
+            VEEPROM_THROW((ret=add_data(cursor)) == OK, ret);
             reset_cursor(cursor);
             move_forward(cursor);
             continue;
         case VRW_FAILED:
-            COND_ERROR_RET((ret=erase_data(cursor)) == OK, ret);
+            VEEPROM_THROW((ret=erase_data(cursor)) == OK, ret);
             reset_cursor(cursor);
             move_forward(cursor);
             continue;
         case VRW_CLEAN:
-            COND_ERROR_RET(check_page_finished(cursor), ERROR_DCNSTY);
+            VEEPROM_THROW(check_page_finished(cursor), ERROR_DCNSTY);
             continue;
         default:
             if (check_page_finished(cursor))
                 return OK;
-            ERROR_RET(ERROR_UNKNOWNSTATUS);
+            VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
         }
     } while (!check_page_finished(cursor));
     return OK;
@@ -627,12 +625,12 @@ static int init_page(vrw_cursor *cursor) {
 
 static int init_data(veeprom_status *vstatus) {
     if (vstatus->busy_pages < 0)
-        ERROR_RET(ERROR_DCNSTY);
+        VEEPROM_THROW(0, ERROR_DCNSTY);
     else if (vstatus->busy_pages == 0)
         return OK;
 
     vrw_cursor *cursor = create_cursor();
-    COND_ERROR_RET(cursor != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(cursor != NULL, ERROR_NULLPTR);
     init_cursor(cursor, vstatus);
 
     rbtree *page_order = vstatus->page_order;
@@ -642,12 +640,12 @@ static int init_data(veeprom_status *vstatus) {
         int ret = move_cursor(node, cursor);
         if (ret != OK) {
             release_cursor(cursor);
-            ERROR_RET(ret);
+            VEEPROM_THROW(0, ret);
         }
         ret = init_page(cursor);
         if (ret != OK) {
             release_cursor(cursor);
-            ERROR_RET(ret);
+            VEEPROM_THROW(0, ret);
         }
     }
 
@@ -666,13 +664,13 @@ static int order_pages(veeprom_status *vstatus) {
         int s = get_page_status(p);
         switch (s) {
         case PAGE_VALID:
-            COND_ERROR_RET((ret=order_valid_page(physnum, p, vstatus)) == OK,
+            VEEPROM_THROW((ret=order_valid_page(physnum, p, vstatus)) == OK,
                     ret);
             vstatus->next_alloc = physnum;
             break;
         case PAGE_RECEIVING:
             ret = erase_page(p, NULL, vstatus);
-            COND_ERROR_RET(ret == OK, ret);
+            VEEPROM_THROW(ret == OK, ret);
             vstatus->busy_map[physnum] = physnum;
             vstatus->next_alloc = physnum;
             break;
@@ -680,7 +678,7 @@ static int order_pages(veeprom_status *vstatus) {
             vstatus->busy_map[physnum] = physnum;
             break;
         default:
-            ERROR_RET(ERROR_UNKNOWNSTATUS);
+            VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
             break;
         }
     }
@@ -691,10 +689,12 @@ static int order_pages(veeprom_status *vstatus) {
 
 static void set_veeprom_page_count() {
 #ifdef CHIBIOS_ON
-    extern uint8_t _veeprom_start;
-    extern uint8_t _veeprom_end;
-    VEEPROM_PAGE_COUNT = (&_veeprom_end - &_veeprom_start)/FLASH_PAGE_SIZE;
-    DEBUG_MSG("veeprom_page_count=%d", VEEPROM_PAGE_COUNT);
+    extern uint8_t _veeprom_start[];
+    extern uint8_t _veeprom_end[];
+    VEEPROM_LOGDEBUG("veeprom_start=0x%x\n", _veeprom_start);
+    VEEPROM_LOGDEBUG("veeprom_end=0x%x\n", _veeprom_end);
+    VEEPROM_PAGE_COUNT = (_veeprom_end - _veeprom_start)/FLASH_PAGE_SIZE;
+    VEEPROM_LOGDEBUG("veeprom_page_count=%d\n", VEEPROM_PAGE_COUNT);
 #else
     VEEPROM_PAGE_COUNT = FLASH_PAGE_COUNT;
 #endif
@@ -705,7 +705,7 @@ static int check_order(veeprom_status *vstatus) {
     int i = 0;
     rbnode *node = rb_min_node(vstatus->page_order, vstatus->page_order->root);
     for (; i < vstatus->busy_pages; i++) {
-        COND_ERROR_RET(!rb_is_nullnode(vstatus->page_order, node), ERROR_INVORDER);
+        VEEPROM_THROW(!rb_is_nullnode(vstatus->page_order, node), ERROR_INVORDER);
         node = rb_next_node(vstatus->page_order, node);
     }
     return OK;
@@ -713,7 +713,7 @@ static int check_order(veeprom_status *vstatus) {
 
 
 int veeprom_init(veeprom_status *s) {
-    COND_ERROR_RET(s != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(s != NULL, ERROR_NULLPTR);
 
     int ret = 0;
     if (((ret=order_pages(s)) != OK) || ((ret=check_order(s)) != OK) ||
@@ -725,7 +725,7 @@ int veeprom_init(veeprom_status *s) {
 
 
 int cmp_vdata(void *pdata1, void *pdata2) {
-    COND_ERROR_RET((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
+    VEEPROM_THROW((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
 
     uint16_t id1 = *(((vdata*)pdata1)->p);
     uint16_t id2 = *(((vdata*)pdata2)->p);
@@ -739,7 +739,7 @@ int cmp_vdata(void *pdata1, void *pdata2) {
 
 
 int cmp_uint16(void *pdata1, void *pdata2) {
-    COND_ERROR_RET((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
+    VEEPROM_THROW((pdata1 != NULL || pdata2 != NULL), ERROR_NULLPTR);
 
     uint16_t v1 = *((uint16_t*)pdata1);
     uint16_t v2 = *((uint16_t*)pdata2);
@@ -810,7 +810,7 @@ int veeprom_clean(veeprom_status *vstatus) {
     int i = 0;
     uint16_t *page = vstatus->flash_start;
     for (; i < VEEPROM_PAGE_COUNT; i++) {
-        COND_ERROR_RET((ret=flash_erase_page(page)) == OK, ret);
+        VEEPROM_THROW((ret=flash_erase_page(page)) == OK, ret);
         page += FLASH_PAGE_SIZE_2B;
     }
     return OK;
@@ -822,14 +822,14 @@ write_2b(uint16_t data, vrw_cursor *cursor) {
     if (cursor->p_cur >= cursor->p_end_page) {
         rbtree *page_order = cursor->vstatus->page_order;
         rbnode *n = rb_next_node(page_order, cursor->virtpage);
-        COND_ERROR_RET(!rb_is_nullnode(page_order, n), ERROR_NULLPTR);
+        VEEPROM_THROW(!rb_is_nullnode(page_order, n), ERROR_NULLPTR);
         int ret = move_cursor(n, cursor);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
         int s = get_page_status(cursor->p_start_page);
-        COND_ERROR_RET(s == PAGE_RECEIVING, ERROR_PAGEALLOC);
+        VEEPROM_THROW(s == PAGE_RECEIVING, ERROR_PAGEALLOC);
     }
     int ret = OK;
-    COND_ERROR_RET((ret=flash_write_short(data, cursor->p_cur)) == OK,
+    VEEPROM_THROW((ret=flash_write_short(data, cursor->p_cur)) == OK,
             ret);
     cursor->rw_ops++;
     ((vpage_status*)(cursor->virtpage->data))->free_space -= 2;
@@ -846,21 +846,21 @@ static int alloc_pages(int size, vrw_cursor *cursor) {
 
     veeprom_status *vstatus = cursor->vstatus;
     int free_pages = VEEPROM_PAGE_COUNT - vstatus->busy_pages;
-    COND_ERROR_RET(count <= free_pages, ERROR_NOMEM);
+    VEEPROM_THROW(count <= free_pages, ERROR_NOMEM);
 
     rbnode *first = NULL;
     int pageno = 0;
     for (; pageno < count; pageno++) {
         int physnum = vstatus->next_alloc;
-        COND_ERROR_RET(physnum != -1, ERROR_NOMEM);
+        VEEPROM_THROW(physnum != -1, ERROR_NOMEM);
         int ret = OK;
         if (first != NULL)
             ret = set_receiving(physnum, NULL, vstatus);
         else
             ret = set_receiving(physnum, &first, vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
         ret = set_next_alloc(vstatus);
-        COND_ERROR_RET(ret == OK, ret);
+        VEEPROM_THROW(ret == OK, ret);
     }
 
     return move_cursor(first, cursor);
@@ -876,13 +876,13 @@ static int alloc_space(vrw_cursor *cursor) {
         rbnode *node = rb_min_node(page_order, page_order->root);
         for (; !rb_is_nullnode(page_order, node);
                 node=rb_next_node(page_order, node)) {
-            COND_ERROR_RET(node->data != NULL, ERROR_NULLPTR);
+            VEEPROM_THROW(node->data != NULL, ERROR_NULLPTR);
             vpage_status *pstatus = (vpage_status*)node->data;
             if (!is_fragmented(pstatus) && pstatus->free_space >= size*2) {
                 int ret = move_cursor(node, cursor);
-                COND_ERROR_RET(ret == OK, ret);
+                VEEPROM_THROW(ret == OK, ret);
                 vpage_status *p = (vpage_status*)cursor->virtpage->data;
-                COND_ERROR_RET(p != NULL, ERROR_NULLPTR);
+                VEEPROM_THROW(p != NULL, ERROR_NULLPTR);
                 cursor->p_cur = cursor->p_start_page + FLASH_PAGE_SIZE_2B -
                     p->free_space/2;
                 return OK;
@@ -895,11 +895,11 @@ static int alloc_space(vrw_cursor *cursor) {
 
 
 static int set_receiving(int physnum, rbnode **f, veeprom_status *vstatus) {
-    COND_ERROR_RET(vstatus->busy_pages + 1 <= VEEPROM_PAGE_COUNT, ERROR_NOMEM);
+    VEEPROM_THROW(vstatus->busy_pages + 1 <= VEEPROM_PAGE_COUNT, ERROR_NOMEM);
 
     uint16_t *p = vstatus->flash_start + physnum * FLASH_PAGE_SIZE_2B;
     int ret = flash_write_short(PAGE_RECEIVING, p);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     rbtree *page_order = vstatus->page_order;
 
@@ -909,13 +909,13 @@ static int set_receiving(int physnum, rbnode **f, veeprom_status *vstatus) {
         if (rb_is_nullnode(page_order, node)) {
             ret = flash_write_short(counter, p + 1);
         } else {
-            COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+            VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
             counter = ((vpage_status*)node->data)->counter + 1;
-            COND_ERROR_RET(counter < FLASH_RESOURCE, ERROR_FLEXP);
+            VEEPROM_THROW(counter < FLASH_RESOURCE, ERROR_FLEXP);
             ret = flash_write_short(counter, p + 1);
         }
     }
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     vstatus->busy_map[physnum] = -1;
     vpage_status *pstatus = create_pstatus();
@@ -924,7 +924,7 @@ static int set_receiving(int physnum, rbnode **f, veeprom_status *vstatus) {
     pstatus->free_space = FLASH_PAGE_SIZE - VEEPROM_PAGE_HEADER;
     pstatus->fragments = 0;
     rbnode *node = rb_create_node();
-    COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
     node->data = (void*)pstatus;
     rb_insert_node(page_order, node);
     vstatus->busy_pages++;
@@ -938,11 +938,11 @@ static int set_receiving(int physnum, rbnode **f, veeprom_status *vstatus) {
 
 static int
 set_valid(uint16_t *page, vpage_status *pstatus, veeprom_status *vstatus) {
-    COND_ERROR_RET(pstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(pstatus != NULL, ERROR_NULLPTR);
     int ret = flash_write_short(PAGE_VALID, page);
     if (ret != OK) {
         erase_page(page, pstatus, vstatus);
-        ERROR_RET(ret);
+        VEEPROM_THROW(0, ret);
     }
     return OK;
 }
@@ -954,20 +954,20 @@ static int receiving_to_valid(veeprom_status *vstatus) {
     rbnode *node = rb_max_node(page_order, page_order->root);
     for (; !rb_is_nullnode(page_order, node);
             node=rb_prev_node(page_order, node)) {
-        COND_ERROR_RET(node->data != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node->data != NULL, ERROR_NULLPTR);
         vpage_status *pstatus = (vpage_status*)node->data;
         uint16_t *p = get_page(pstatus, vstatus);
-        COND_ERROR_RET(p != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(p != NULL, ERROR_NULLPTR);
         int s = get_page_status(p);
         switch (s) {
         case PAGE_VALID:
             break;
         case PAGE_RECEIVING:
             ret = set_valid(p, pstatus, vstatus);
-            COND_ERROR_RET(ret == OK, ret);
+            VEEPROM_THROW(ret == OK, ret);
             continue;
         default:
-            ERROR_RET(ERROR_UNKNOWNSTATUS);
+            VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
         }
     }
     return ret;
@@ -978,10 +978,10 @@ static int erase_receiving(veeprom_status *vstatus) {
     rbtree *page_order = vstatus->page_order;
     rbnode *node = rb_max_node(page_order, page_order->root);
     while (!rb_is_nullnode(page_order, node)) {
-        COND_ERROR_RET(node->data != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node->data != NULL, ERROR_NULLPTR);
         vpage_status *pstatus = (vpage_status*)node->data;
         uint16_t *p = get_page(pstatus, vstatus);
-        COND_ERROR_RET(p != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(p != NULL, ERROR_NULLPTR);
         int s = get_page_status(p);
         switch (s) {
         case PAGE_VALID:
@@ -990,22 +990,22 @@ static int erase_receiving(veeprom_status *vstatus) {
             {
                 rbnode *prev = rb_prev_node(page_order, node);
                 int ret = remove_page(p, node, pstatus, vstatus);
-                COND_ERROR_RET(ret == OK, ret);
+                VEEPROM_THROW(ret == OK, ret);
                 node = prev;
             }
             continue;
         default:
-            ERROR_RET(ERROR_UNKNOWNSTATUS);
+            VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
         }
     }
-    ERROR_RET(ERROR_DCNSTY);
+    VEEPROM_THROW(0, ERROR_DCNSTY);
 }
 
 
 static inline int check_cursor_cur(vrw_cursor *cursor) {
     uint16_t *start = cursor->vstatus->flash_start;
     uint16_t *end = start + VEEPROM_PAGE_COUNT * FLASH_PAGE_SIZE;
-    COND_ERROR_RET(cursor->p_cur >= start && cursor->p_cur < end,
+    VEEPROM_THROW(cursor->p_cur >= start && cursor->p_cur < end,
             ERROR_PAGEALLOC);
     return OK;
 }
@@ -1016,25 +1016,25 @@ write_data(uint16_t id, uint8_t *data, uint16_t length,
         vrw_cursor *cursor) {
 
     int ret = alloc_space(cursor);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     ret = check_cursor_cur(cursor);
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
 
     cursor->cur_checksum = 0;
-    COND_ERROR_RET(cursor->data != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(cursor->data != NULL, ERROR_NULLPTR);
     cursor->data->id = id;
     cursor->data->length = length;
-    COND_ERROR_RET((ret=write_2b(id, cursor)) == OK, ret);
+    VEEPROM_THROW((ret=write_2b(id, cursor)) == OK, ret);
     cursor->data->p_start_data = cursor->p_cur;
     move_forward(cursor);
 
-    COND_ERROR_RET((ret=write_2b(length, cursor)) == OK, ret);
+    VEEPROM_THROW((ret=write_2b(length, cursor)) == OK, ret);
     move_forward(cursor);
     {
         int i = 0;
         for (; i < cursor->aligned_length_2b - 1; i++) {
             uint16_t d = (*(data + 2*i) << 8) | (*(data + 2*i + 1));
-            COND_ERROR_RET((ret=write_2b(d, cursor)) == OK, ret);
+            VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
             move_forward(cursor);
         }
     }
@@ -1045,11 +1045,11 @@ write_data(uint16_t id, uint8_t *data, uint16_t length,
             d = (*(data + length - 1));
         else
             d = (*(data + length - 2)) | (*(data + length - 1) << 8); //LE
-        COND_ERROR_RET((ret=write_2b(d, cursor)) == OK, ret);
+        VEEPROM_THROW((ret=write_2b(d, cursor)) == OK, ret);
         move_forward(cursor);
     }
 
-    COND_ERROR_RET((ret=write_2b(cursor->cur_checksum, cursor)) == OK, ret);
+    VEEPROM_THROW((ret=write_2b(cursor->cur_checksum, cursor)) == OK, ret);
 
     return OK;
 }
@@ -1067,16 +1067,16 @@ int _veeprom_write(uint16_t id, uint8_t *data, int length,
     if (ret != OK) {
         erase_receiving(vstatus);
         release_cursor(cursor);
-        ERROR_RET(ret);
+        VEEPROM_THROW(0, ret);
     }
 
     ret = receiving_to_valid(vstatus);
-    COND_ERROR_RET_F(ret == OK, ret, release_cursor(cursor));
+    VEEPROM_THROW(ret == OK, ret, release_cursor(cursor));
 
     ret = add_data(cursor);
     release_cursor(cursor);
 
-    COND_ERROR_RET(ret == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
     return OK;
 }
 
@@ -1084,13 +1084,13 @@ int _veeprom_write(uint16_t id, uint8_t *data, int length,
 int veeprom_write(uint16_t id, uint8_t *data, int length,
         veeprom_status *vstatus) {
 
-    COND_ERROR_RET(data != NULL && vstatus != NULL, ERROR_NULLPTR);
-    COND_ERROR_RET(id > 0 && id < 0xFFFF && length < 0xFFFF && length >=0,
+    VEEPROM_THROW(data != NULL && vstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(id > 0 && id < 0xFFFF && length < 0xFFFF && length >=0,
             ERROR_PARAM);
 
     int ret = _veeprom_write(id, data, length, vstatus);
-    COND_ERROR_RET(ret == OK, ret);
-    COND_ERROR_RET((ret=gc(vstatus)) == OK, ret);
+    VEEPROM_THROW(ret == OK, ret);
+    VEEPROM_THROW((ret=gc(vstatus)) == OK, ret);
     return OK;
 }
 
@@ -1197,7 +1197,7 @@ static int iter_data(vrw_cursor *cursor) {
         case VRW_OK:
             return OK;
         default:
-            ERROR_RET(ERROR_UNKNOWNSTATUS);
+            VEEPROM_THROW(0, ERROR_UNKNOWNSTATUS);
         }
         int data_status = get_data_status(cursor);
         if (data_status == VRW_FAILED || data_status == VRW_OK)
@@ -1223,7 +1223,7 @@ vdata* veeprom_read(uint16_t id, veeprom_status *vstatus) {
     }
 
     if (node == ids->nullnode) {
-        DEBUG_MSG("not found id=%d", id);
+        VEEPROM_LOGDEBUG("not found id=%d\n", id);
         return NULL;
     }
 
@@ -1232,7 +1232,7 @@ vdata* veeprom_read(uint16_t id, veeprom_status *vstatus) {
 
 
 int veeprom_delete(uint16_t id, veeprom_status *vstatus) {
-    COND_ERROR_RET(vstatus != NULL, ERROR_NULLPTR);
+    VEEPROM_THROW(vstatus != NULL, ERROR_NULLPTR);
 
     rbnode *node = NULL;
     rbtree *ids = vstatus->ids;
@@ -1240,11 +1240,11 @@ int veeprom_delete(uint16_t id, veeprom_status *vstatus) {
         vdata data;
         data.p = &id;
         node = rb_search_node(ids, &data);
-        COND_ERROR_RET(node != NULL, ERROR_NULLPTR);
+        VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
     }
 
     if (node == ids->nullnode) {
-        DEBUG_MSG("not found id=%d", id);
+        VEEPROM_LOGDEBUG("not found id=%d\n", id);
         return OK;
     }
 
@@ -1254,7 +1254,7 @@ int veeprom_delete(uint16_t id, veeprom_status *vstatus) {
     int ret = remove_data(rcursor, id);
     if (ret != OK) {
         release_cursor(rcursor);
-        ERROR_RET(ret);
+        VEEPROM_THROW(0, ret);
     }
 
     ids = rb_delete_node(ids, node);
@@ -1262,6 +1262,8 @@ int veeprom_delete(uint16_t id, veeprom_status *vstatus) {
     rb_release_node(node);
     release_cursor(rcursor);
 
-    COND_ERROR_RET((ret=gc(vstatus)) == OK, ret);
+    VEEPROM_THROW((ret=gc(vstatus)) == OK, ret);
     return OK;
 }
+
+#undef ERROR_RET

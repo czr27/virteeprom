@@ -19,7 +19,7 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <string.h>
-#include "examine.h"
+#include "wrappers.h"
 #include "flash_cfg.h"
 #include "flash.h"
 #include "errnum.h"
@@ -50,7 +50,7 @@ int flash_erase_page(uint16_t *p) {
 
 
 void* flash_init(int fd) {
-    COND_ERROR_RET2(fd > 2, emsg(ERROR_PARAM), NULL);
+    VEEPROM_TRACE(fd > 2, ERROR_PARAM, return NULL;);
     int length = FLASH_PAGE_SIZE * FLASH_PAGE_COUNT;
     return mmap(NULL, length, PROT_READ | PROT_WRITE,
             MAP_SHARED, fd, 0);
@@ -59,7 +59,7 @@ void* flash_init(int fd) {
 
 int flash_uninit(void *p) {
     int ret = OK;
-    COND_ERROR_RET((ret=munmap(p, FLASH_PAGE_SIZE * FLASH_PAGE_COUNT)) == 0,
+    VEEPROM_THROW((ret=munmap(p, FLASH_PAGE_SIZE * FLASH_PAGE_COUNT)) == 0,
             ERROR_SYSTEM);
     return OK;
 }

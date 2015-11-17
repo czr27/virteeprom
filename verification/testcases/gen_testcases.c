@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "examine.h"
+#include "wrappers.h"
 #include "flash_cfg.h"
 #include "flash.h"
 #include "errnum.h"
@@ -53,11 +53,11 @@ static int write_hw(int value, FILE *file) {
 static int write_id_length(uint16_t id, uint16_t length, FILE *file) {
     int hw_written = 0;
     int written = fwrite(&id, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, ERROR_WRT);
+    VEEPROM_THROW(written == 1, ERROR_WRT);
     hw_written += 1;
 
     written = fwrite(&length, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, -ERROR_WRT);
+    VEEPROM_THROW(written == 1, -ERROR_WRT);
     hw_written += 1;
 
     return hw_written;
@@ -72,13 +72,13 @@ static int write_data(uint16_t id, uint16_t length, FILE *file) {
     int aligned_length_2b = (length + (length & 1)) >> 1;
     for (; i < aligned_length_2b; i++) {
         int written = fwrite(&i, sizeof(uint16_t), 1, file);
-        COND_ERROR_RET(written == 1, -ERROR_WRT);
+        VEEPROM_THROW(written == 1, -ERROR_WRT);
         hw_written += 1;
         checksum ^= i; 
     }
 
     int written = fwrite(&checksum, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, -ERROR_WRT);
+    VEEPROM_THROW(written == 1, -ERROR_WRT);
     hw_written += 1;
 
     return hw_written;
@@ -90,7 +90,7 @@ static int write_raw(uint16_t num, uint16_t sval, FILE *file) {
     int hw_written = 0;
     for (; i < num; i++, sval++) {
         int written = fwrite(&sval, sizeof(uint16_t), 1, file);
-        COND_ERROR_RET(written == 1, -ERROR_WRT);
+        VEEPROM_THROW(written == 1, -ERROR_WRT);
         hw_written += 1;
     }
     return hw_written;
@@ -104,12 +104,12 @@ static int write_data_checksum(uint16_t id, uint16_t length,
     int aligned_length_2b = (length + (length & 1)) >> 1;
     for (; i < aligned_length_2b; i++) {
         int written = fwrite(&i, sizeof(uint16_t), 1, file);
-        COND_ERROR_RET(written == 1, -ERROR_WRT);
+        VEEPROM_THROW(written == 1, -ERROR_WRT);
         hw_written += 1;
     }
 
     int written = fwrite(&checksum, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, -ERROR_WRT);
+    VEEPROM_THROW(written == 1, -ERROR_WRT);
     hw_written += 1;
 
     return hw_written;
@@ -118,9 +118,9 @@ static int write_data_checksum(uint16_t id, uint16_t length,
 
 int write_header(FILE *file, int status, int num) {
     int written = fwrite(&status, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, ERROR_WRT);
+    VEEPROM_THROW(written == 1, ERROR_WRT);
     written = fwrite(&num, sizeof(uint16_t), 1, file);
-    COND_ERROR_RET(written == 1, ERROR_WRT);
+    VEEPROM_THROW(written == 1, ERROR_WRT);
     return 2;
 }
 
@@ -131,7 +131,7 @@ static int fill_empty(int num, FILE *file) {
     int i = 0;
     for (; i < num; i++) {
         int written = fwrite(&empty, sizeof(uint16_t), 1, file);
-        COND_ERROR_RET(written == 1, -ERROR_WRT);
+        VEEPROM_THROW(written == 1, -ERROR_WRT);
         total_written++;
     }
     return total_written;
@@ -166,7 +166,7 @@ int gen_verify_2(const char *filename) {
                 written = fwrite(&page, sizeof(uint16_t), 1, file);
             else
                 written = fwrite(&e, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
         }
     }
     fclose(file);
@@ -192,7 +192,7 @@ int gen_verify_3(const char *filename) {
                 written = fwrite(&page, sizeof(uint16_t), 1, file);
             else
                 written = fwrite(&e, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
         }
     }
     fclose(file);
@@ -212,16 +212,16 @@ int gen_verify_4(const char *filename) {
         if (page == 2) {
             int hw_written = write_header(file, PAGE_VALID, 123);
             int ret = OK;
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -245,19 +245,19 @@ int gen_verify_5(const char *filename) {
     for (; page < FLASH_PAGE_COUNT; page++) {
         if (page == 2) {
             written = fwrite(&v, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             uint16_t virtnum = 0;
             written = fwrite(&virtnum, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             written = fill_empty(510, file);
-            COND_ERROR_RET(written == 510, ERROR_WRT);
+            VEEPROM_THROW(written == 510, ERROR_WRT);
         } else {
             for (i = 0; i < FLASH_PAGE_SIZE_2B; i++) {
                 if (i == 0 && (page == 0 || page == 1 || page == 99))
                     written = fwrite(&r, sizeof(uint16_t), 1, file);
                 else
                     written = fwrite(&e, sizeof(uint16_t), 1, file);
-                COND_ERROR_RET(written == 1, ERROR_WRT);
+                VEEPROM_THROW(written == 1, ERROR_WRT);
             }
         }
     }
@@ -283,28 +283,28 @@ int gen_verify_6(const char *filename) {
         if (page == 2) {
             int page_status = 0x0;
             written = fwrite(&page_status, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             int page_number = 0x0000;
             written = fwrite(&page_number, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             written = fill_empty(510, file);
-            COND_ERROR_RET(written == 510, ERROR_WRT);
+            VEEPROM_THROW(written == 510, ERROR_WRT);
         } else if (page == 3) {
             int page_status = 0x0;
             written = fwrite(&page_status, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             int page_number = 0x0003;
             written = fwrite(&page_number, sizeof(uint16_t), 1, file);
-            COND_ERROR_RET(written == 1, ERROR_WRT);
+            VEEPROM_THROW(written == 1, ERROR_WRT);
             written = fill_empty(510, file);
-            COND_ERROR_RET(written == 510, ERROR_WRT);
+            VEEPROM_THROW(written == 510, ERROR_WRT);
         } else {
             for (i = 0; i < FLASH_PAGE_SIZE_2B; i++) {
                 if (i == 0 && (page == 0 || page == 1 || page == 99))
                     written = fwrite(&r, sizeof(uint16_t), 1, file);
                 else
                     written = fwrite(&e, sizeof(uint16_t), 1, file);
-                COND_ERROR_RET(written == 1, ERROR_WRT);
+                VEEPROM_THROW(written == 1, ERROR_WRT);
             }
         }
     }
@@ -329,35 +329,35 @@ int gen_verify_7(const char *filename) {
     for (; page < FLASH_PAGE_COUNT; page++) {
         if (page == 0) {
             int hw_written = write_header(file, PAGE_RECEIVING, 3);
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else if (page == 99) {
             int hw_written = write_header(file, PAGE_RECEIVING, 4);
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else if (page == 1) {
             int hw_written = write_header(file, PAGE_RECEIVING, 5);
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else if (page == 20) {
             int hw_written = write_header(file, PAGE_VALID, 0);
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else if (page == 127) {
             int hw_written = write_header(file, PAGE_VALID, 1);
-            COND_ERROR_RET((ret=fill_empty(510, file)) > 0, ERROR_WRT);
+            VEEPROM_THROW((ret=fill_empty(510, file)) > 0, ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         } else {
             int hw_written = 0;
-            COND_ERROR_RET((ret=fill_empty(512, file)) > 0,    
+            VEEPROM_THROW((ret=fill_empty(512, file)) > 0,    
                     ERROR_WRT);
             hw_written += ret;
-            COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+            VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -378,18 +378,18 @@ int gen_verify_8(const char *filename) {
         if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 44) {
             int w = write_header(file, PAGE_VALID, 1);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -411,18 +411,18 @@ int gen_verify_9(const char *filename) {
         if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -444,7 +444,7 @@ int gen_verify_10(const char *filename) {
         if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(10, file);
@@ -453,14 +453,14 @@ int gen_verify_10(const char *filename) {
             w += fill_empty(10, file);
             w += fwrite(&jag, sizeof(jag), 1, file);
             w += fill_empty(488, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -481,7 +481,7 @@ int gen_verify_11(const char *filename) {
         if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(10, file);
@@ -490,14 +490,14 @@ int gen_verify_11(const char *filename) {
             w += fill_empty(10, file);
             w += fwrite(&jag, sizeof(jag), 1, file);
             w += fill_empty(488, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -518,10 +518,10 @@ int gen_verify_12(const char *filename) {
         if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data(243, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += fill_empty(507, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -531,14 +531,14 @@ int gen_verify_12(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -560,10 +560,10 @@ int gen_verify_13(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(20, file);
             int ret = write_data(243, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += fill_empty(487, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -573,14 +573,14 @@ int gen_verify_13(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -603,9 +603,9 @@ int gen_verify_14(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(507, file);
             int ret = write_data(243, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -615,14 +615,14 @@ int gen_verify_14(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -643,11 +643,11 @@ int gen_verify_15(const char *filename) {
         if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_id_length(243, 0, file);
-            COND_ERROR_RET(ret == 2, -ret);
+            VEEPROM_THROW(ret == 2, -ret);
             w += ret;
             w += write_hw(777, file);
             w += fill_empty(507, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -657,14 +657,14 @@ int gen_verify_15(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -686,11 +686,11 @@ int gen_verify_16(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(20, file);
             int ret = write_id_length(243, 0, file);
-            COND_ERROR_RET(ret == 2, -ret);
+            VEEPROM_THROW(ret == 2, -ret);
             w += ret;
             w += write_hw(123, file);
             w += fill_empty(487, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -700,14 +700,14 @@ int gen_verify_16(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -729,10 +729,10 @@ int gen_verify_17(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(507, file);
             int ret = write_id_length(243, 0, file);
-            COND_ERROR_RET(ret == 2, -ret);
+            VEEPROM_THROW(ret == 2, -ret);
             w += ret;
             w += write_hw(123, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -742,14 +742,14 @@ int gen_verify_17(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -769,10 +769,10 @@ int gen_verify_18(const char *filename) {
         if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_id_length(243, 0xFFFF, file);
-            COND_ERROR_RET(ret == 2, -ret);
+            VEEPROM_THROW(ret == 2, -ret);
             w += ret;
             w += fill_empty(508, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -782,14 +782,14 @@ int gen_verify_18(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -810,10 +810,10 @@ int gen_verify_19(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(20, file);
             int ret = write_id_length(243, 0xFFFF, file);
-            COND_ERROR_RET(ret == 2, -ret);
+            VEEPROM_THROW(ret == 2, -ret);
             w += ret;
             w += fill_empty(488, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -823,14 +823,14 @@ int gen_verify_19(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -851,9 +851,9 @@ int gen_verify_20(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(508, file);
             int ret = write_id_length(243, 0xFFFF, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 77) {
             int w = write_header(file, PAGE_VALID, 0);
             int i = 0;
@@ -863,14 +863,14 @@ int gen_verify_20(const char *filename) {
                 w += fwrite(&jag, sizeof(jag), 1, file);
             }
             w += fill_empty(466, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -889,17 +889,17 @@ int gen_verify_21(const char *filename) {
         if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data(243, 1, file);
-            COND_ERROR_RET(ret == 4, -ret);
+            VEEPROM_THROW(ret == 4, -ret);
             w += ret;
             w += fill_empty(506, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -919,17 +919,17 @@ int gen_verify_22(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(20, file);
             int ret = write_data(243, 1, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += fill_empty(486, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -951,16 +951,16 @@ int gen_verify_23(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(506, file);
             int ret = write_data(243, 1, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -979,17 +979,17 @@ int gen_verify_24(const char *filename) {
         if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 44) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data_checksum(243, 1, 123, file);
-            COND_ERROR_RET(ret == 4, -ret);
+            VEEPROM_THROW(ret == 4, -ret);
             w += ret;
             w += fill_empty(506, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1009,17 +1009,17 @@ int gen_verify_25(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(20, file);
             int ret = write_data_checksum(243, 1, 123, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += fill_empty(486, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1039,16 +1039,16 @@ int gen_verify_26(const char *filename) {
             int w = write_header(file, PAGE_VALID, 0);
             w += fill_empty(506, file);
             int ret = write_data_checksum(243, 1, 123, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1068,16 +1068,16 @@ int gen_verify_27(const char *filename) {
         if (page == 43) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data(243, 1014, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1097,16 +1097,16 @@ int gen_verify_28(const char *filename) {
         if (page == 43) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data_checksum(243, 1014, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 0 || page == 1 || page == 99) {
             int w = write_header(file, PAGE_RECEIVING, page);
             w += fill_empty(510, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1126,30 +1126,30 @@ int gen_verify_29(const char *filename) {
         if (page == 100) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_id_length(123, 2069, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_raw(508, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 32) {
             int w = write_header(file, PAGE_VALID, 1);
             int ret = write_raw(510, 508, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 1) {
             int w = write_header(file, PAGE_VALID, 2);
             int ret = write_raw(17, 1018, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             int checksum = calc_checksum(123, 2069);
             w += write_hw(checksum, file);
             w += fill_empty(492, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1169,29 +1169,29 @@ int gen_verify_30(const char *filename) {
         if (page == 100) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_id_length(123, 2069, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_raw(508, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 32) {
             int w = write_header(file, PAGE_VALID, 1);
             int ret = write_raw(510, 508, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 1) {
             int w = write_header(file, PAGE_VALID, 2);
             int ret = write_raw(17, 1018, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += write_hw(555, file);
             w += fill_empty(492, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1212,46 +1212,46 @@ int gen_verify_31(const char *filename) {
         if (page == 24) {
             int w = write_header(file, PAGE_VALID, 0);
             int ret = write_data(123, 5, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_data(456, 3, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_data(1, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_data(12, 2, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             w += fill_empty(492, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 12) {
             int w = write_header(file, PAGE_VALID, 1);
             int ret = write_data(12777, 1014, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 14) {
             int w = write_header(file, PAGE_VALID, 2);
             int ret = write_id_length(888, 1019, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             ret = write_raw(508, 0, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else if (page == 1) {
             int w = write_header(file, PAGE_VALID, 3);
             int ret = write_raw(2, 508, file);
-            COND_ERROR_RET(ret > 0, -ret);
+            VEEPROM_THROW(ret > 0, -ret);
             w += ret;
             uint16_t checksum = calc_checksum(888, 1019);
             w += fwrite(&checksum, sizeof(uint16_t), 1, file);
             w += fill_empty(507, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         } else {
             int w = fill_empty(512, file);
-            COND_ERROR_RET(w == 512, ERROR_WRT);
+            VEEPROM_THROW(w == 512, ERROR_WRT);
         }
     }
     fclose(file);
@@ -1261,21 +1261,20 @@ int gen_verify_31(const char *filename) {
 
 int gen_clear(const char *filename) {
     FILE *file = fopen(filename, "w+");
-    COND_ERROR_RET(file != NULL, ERROR_SYSTEM);
+    VEEPROM_THROW(file != NULL, ERROR_SYSTEM);
     int ret = OK;
     int total_written = 0;
     int page = 0;
     for (; page < FLASH_PAGE_COUNT; page++) {
         int hw_written = 0;
-        COND_ERROR_RET((ret=fill_empty(512, file)) > 0,
+        VEEPROM_THROW((ret=fill_empty(512, file)) > 0,
                 ERROR_WRT);
         hw_written += ret;
-        COND_ERROR_RET(hw_written == 512, ERROR_WRT);
+        VEEPROM_THROW(hw_written == 512, ERROR_WRT);
         total_written += hw_written;
     }
-    COND_ERROR_RET(total_written == 512*128,
-            ERROR_WRT);
 
-    COND_ERROR_RET((ret=fclose(file)) == 0, ERROR_SYSTEM);
+    VEEPROM_THROW(total_written == 512*128, ERROR_WRT);
+    VEEPROM_THROW((ret=fclose(file)) == 0, ERROR_SYSTEM);
     return OK;
 }

@@ -18,13 +18,7 @@
 
 #include "rbtree.h"
 #include <stdlib.h>
-
-#ifdef CHIBIOS_ON
-#include "ch.h"
-#include "chmempools.h"
-MEMORYPOOL_DECL(rbtree_pool, sizeof(struct rbtree), chCoreAllocI);
-MEMORYPOOL_DECL(rbnode_pool, sizeof(struct rbnode), chCoreAllocI);
-#endif
+#include "mem.h"
 
 
 static rbtree *rb_left_rotate(rbtree *tree, rbnode *x) {
@@ -327,12 +321,7 @@ rbnode *rb_search_node(rbtree *tree, void *data) {
 
 
 rbtree *rb_create_tree(int (*cmp_func)(void*, void*)) {
-    rbtree *tree =
-#ifdef CHIBIOS_ON
-        chPoolAlloc(&rbtree_pool);
-#else
-        malloc(sizeof(rbtree));
-#endif
+    rbtree *tree = VEEPROM_Alloc(rbtree);
 
     rbnode *node = rb_create_node();
     node->color = RB_BLACK;
@@ -354,42 +343,24 @@ int rb_release_tree(rbtree *tree) {
     rbnode *node = rb_min_node(tree, tree->root);
     while (!rb_is_nullnode(tree, node)) {
         tree = rb_delete_node(tree, node);
-#ifdef CHIBIOS_ON
-        chPoolFreeI(&rbnode_pool, (void*)node);
-#else
-        free(node);
-#endif
+        VEEPROM_Dealloc(rbnode, node);
         node = rb_min_node(tree, tree->root);
     }
 
-#ifdef CHIBIOS_ON
-    chPoolFree(&rbnode_pool, (void*)tree->nullnode);
-    chPoolFree(&rbtree_pool, (void*)tree);
-#else
-    free(tree->nullnode);
-    free(tree);
-#endif
+    VEEPROM_Dealloc(rbnode, tree->nullnode);
+    VEEPROM_Dealloc(rbtree, tree);
 
     return 0;
 }
 
 
 rbnode *rb_create_node() {
-    return
-#ifdef CHIBIOS_ON
-        chPoolAlloc(&rbnode_pool);
-#else
-        malloc(sizeof(rbnode));
-#endif
+    return VEEPROM_Alloc(rbnode);
 }
 
 
 void rb_release_node(rbnode *node) {
     if (node == NULL)
         return;
-#ifdef CHIBIOS_ON
-    chPoolFree(&rbnode_pool, (void*)node);
-#else
-    free(node);
-#endif
+    VEEPROM_Dealloc(rbnode, node);
 }

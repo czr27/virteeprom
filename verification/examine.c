@@ -533,10 +533,11 @@ int verify_12(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 44)
+        if (i == 44) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -578,10 +579,11 @@ int verify_13(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 44)
+        if (i == 44) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -621,10 +623,11 @@ int verify_14(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 100)
+        if (i == 100) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -795,10 +798,11 @@ int verify_21(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 44)
+        if (i == 44) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -851,10 +855,11 @@ int verify_22(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 44)
+        if (i == 44) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -898,10 +903,11 @@ int verify_23(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 100)
+        if (i == 100) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -1024,10 +1030,11 @@ int verify_27(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 43)
+        if (i == 43) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -1123,10 +1130,11 @@ int verify_29(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 100 || i == 32 || i == 1)
+        if (i == 100 || i == 32 || i == 1) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -1204,10 +1212,11 @@ int verify_31(alloc_res *a) {
 
     int i = 0;
     for (; i < FLASH_PAGE_COUNT; i++) {
-        if (i == 24 || i == 12 || i == 14 || i == 1)
+        if (i == 24 || i == 12 || i == 14 || i == 1) {
             VEEPROM_THROW(vstatus->busy_map[i] == -1, ERROR_DCNSTY);
-        else
+        } else {
             VEEPROM_THROW(vstatus->busy_map[i] == i, ERROR_DCNSTY);
+        }
     }
 
     rbnode *n = rb_min_node(vstatus->page_order, vstatus->page_order->root);
@@ -1319,7 +1328,7 @@ int verify_32(alloc_res *a) {
     ret = veeprom_write(id1, data, length, vstatus);
     VEEPROM_THROW(ret == OK, ret, free(data));
     ret = veeprom_write(id2, data, length, vstatus);
-    VEEPROM_THROW(ret == ERROR_FLEXP, ERROR_EFAIL, free(data));
+    VEEPROM_THROW(ret == ERROR_FLASH_EXPIRED, ERROR_EFAIL, free(data));
 
     free(data);
     return OK;

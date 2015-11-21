@@ -17,12 +17,21 @@
 
 
 __errno_message__(OK, ("no error"))
+
+
+/*
+ * Generic errors
+ */
 __errno_message__(ERROR_UNKNOWN, ("unknown error"))
 __errno_message__(ERROR_NULLPTR, ("null pointer"))
 __errno_message__(ERROR_UNKNOWNSTATUS, ("uknown status"))
 __errno_message__(ERROR_INVORDER, ("invalid order"))
 __errno_message__(ERROR_DCNSTY, ("data consistency error"))
-__errno_message__(ERROR_FLASHWRT, ("flash write error"))
+
+
+/*
+ * Errors pertain to VirtEEPROM layer
+ */
 __errno_message__(ERROR_PAGEALLOC, ("page alloc error"))
 __errno_message__(ERROR_NOMEM, ("no memory"))
 __errno_message__(ERROR_PARAM, ("bad parameter"))
@@ -34,6 +43,17 @@ __errno_message__(ERROR_WRT, ("writing failed"))
 __errno_message__(ERROR_SYSTEM, ("system error"))
 __errno_message__(ERROR_OBNDS, ("out of bounds"))
 __errno_message__(ERROR_EFAIL, ("expected fail"))
-__errno_message__(ERROR_FLEXP, ("flash expired"))
-__errno_message__(ERROR_FLASHERASE, ("flash erase error"))
-__errno_message__(ERROR_FLASHASSERT, ("flash assert"))
+__errno_message__(ERROR_ID, ("id error"))
+__errno_message__(ERROR_LENGTH, ("length error"))
+__errno_message__(ERROR_DATA, ("data error"))
+__errno_message__(ERROR_CHECKSUM, ("checksum error"))
+
+
+/*
+ * Flash related errors
+ */
+__errno_message__(ERROR_FLASH_EXPIRED, ("flash expired"))
+__errno_message__(ERROR_FLASH_ASSERT, ("flash error"))
+__errno_message__(ERROR_FLASH_WRITE, ("flash write error"))
+__errno_message__(ERROR_FLASH_WRP, ("flash write protects error"))
+__errno_message__(ERROR_FLASH_ERASE, ("flash erase error"))

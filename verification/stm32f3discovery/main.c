@@ -17,7 +17,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "test.h"
 #include "eeprom.h"
 #include "errnum.h"
 #include "errmsg.h"

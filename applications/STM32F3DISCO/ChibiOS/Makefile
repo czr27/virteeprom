@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 -DCHIBIOS_ON
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 -DVEEPROM_DEBUG
 endif
 
 # C specific options here (added to USE_OPT).
@@ -39,8 +39,8 @@ ifeq ($(USE_THUMB),)
 endif
 
 # Enable this if you want to see the full log while compiling.
-ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+ifeq ($(USE__COMPILE),)
+  USE__COMPILE = yes
 endif
 
 # If enabled, this option makes the build process faster by not compiling
@@ -103,6 +103,9 @@ include $(CHIBIOS)/test/rt/test.mk
 # Define linker script file here
 LDSCRIPT= STM32F303xC.ld
 
+VEEPROM_DIR = ../../..
+CHIBIOS_COMMON_DIR = ../../ChibiOS_common
+
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(STARTUPSRC) \
@@ -115,10 +118,11 @@ CSRC = $(STARTUPSRC) \
        $(TESTSRC) \
 	   $(CHIBIOS)/os/various/shell.c \
 	   $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+       $(CHIBIOS_COMMON_DIR)/mem.c \
        stm32f30x_flash.c \
-       ../../eeprom.c \
-       ../../rbtree.c \
-       ../../errmsg.c \
+       $(VEEPROM_DIR)/eeprom.c \
+       $(VEEPROM_DIR)/rbtree.c \
+       $(VEEPROM_DIR)/errmsg.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -150,8 +154,9 @@ ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-         $(CHIBIOS)/os/various ../../ \
-		 $(CHIBIOS)/os/hal/lib/streams
+         $(CHIBIOS)/os/various $(VEEPROM_DIR) \
+		 $(CHIBIOS_COMMON_DIR) $(CHIBIOS)/os/hal/lib/streams \
+         $(CHIBIOS)/os/ext/CMSIS/ST
 
 #
 # Project, sources and paths

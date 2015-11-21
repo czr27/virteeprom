@@ -34,8 +34,10 @@
  extern "C" {
 #endif
 
+#define STM32F303xC
+
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f30x.h"
+#include "stm32f3xx.h"
 
 /** @addtogroup STM32F30x_StdPeriph_Driver
   * @{

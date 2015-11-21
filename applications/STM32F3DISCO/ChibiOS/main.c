@@ -20,7 +20,7 @@
 #include "eeprom.h"
 #include "errnum.h"
 #include "errmsg.h"
-#include "examine.h"
+#include "wrappers.h"
 #include "shell.h"
 #include "chprintf.h"
 #include "chtm.h"
@@ -90,18 +90,15 @@ static void cmd_initflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 	int ret = OK;
 
 	if (VSTATUS != NULL) {
-		chprintf(chp, "release old veeprom status\r\n");
-		if ((ret = veeprom_status_release(VSTATUS)) != OK) {
-			ERROR(emsg(ret));
-			return;
-		}
+		VEEPROM_LOGINFO("release old veeprom status\r\n");
+		VEEPROM_TRACE((ret = veeprom_status_release(VSTATUS)) == OK,
+                ret,
+                return;
+                );
 	}
 
 	VSTATUS = veeprom_create_status();
-	if (VSTATUS == NULL) {
-		ERROR("virteeprom creation failed\r\n");
-		return;
-	}
+	VEEPROM_TRACE(VSTATUS != NULL, ERROR_NULLPTR, return;);
 
 	extern uint8_t _veeprom_start;
 
@@ -109,17 +106,16 @@ static void cmd_initflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 	chTMObjectInit(&mem_tmu);
 	chTMStartMeasurementX(&mem_tmu);
 	ret = veeprom_status_init(VSTATUS, (uint16_t*) &_veeprom_start);
-	COND_ERROR(ret == OK, emsg(ret));
-	if (ret != OK) {
+	VEEPROM_TRACE(ret == OK, ret,
 		chTMStopMeasurementX(&mem_tmu);
 		veeprom_status_release(VSTATUS);
 		return;
-	}
+        );
 
 	ret = veeprom_init(VSTATUS);
 	chTMStopMeasurementX(&mem_tmu);
 
-	COND_ERROR(ret == OK, emsg(ret));
+	VEEPROM_TRACE(ret == OK, ret);
 	chprintf(chp, "successfully initialized during %d mks\r\n",
 			RTC2US(STM32_SYSCLK, mem_tmu.last));
 }
@@ -127,14 +123,14 @@ static void cmd_initflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 static void cmd_wipeflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 	(void) argc;
 	(void*) argv;
-	COND_ERROR(VSTATUS != NULL, emsg(ERROR_NULLPTR));
+	VEEPROM_TRACE(VSTATUS != NULL, ERROR_NULLPTR);
 	time_measurement_t mem_tmu;
 	chTMObjectInit(&mem_tmu);
 	chTMStartMeasurementX(&mem_tmu);
 	int ret = veeprom_clean(VSTATUS);
-	COND_ERROR(ret == OK, emsg(ret));
-	chprintf(chp, "successfully wiped during %d mks\r\n",
-			RTC2US(STM32_SYSCLK, mem_tmu.last));
+	VEEPROM_TRACE(ret == OK, ret, return;);
+	VEEPROM_LOGINFO("successfully wiped during %d mks\r\n",
+            RTC2US(STM32_SYSCLK, mem_tmu.last));
 	chTMStopMeasurementX(&mem_tmu);
 	cmd_initflash(chp, argc, argv);
 }
@@ -146,12 +142,13 @@ static void cmd_writeflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 	chTMObjectInit(&mem_tmu);
 	chTMStartMeasurementX(&mem_tmu);
 	for (; i < 101; i++) {
-		COND_ERROR(
+		VEEPROM_TRACE(
 				(ret = veeprom_write(i, (uint8_t*) &TEST_VECTOR[i], 1, VSTATUS))
-						== OK, emsg(ret));
+						== OK, ret, break;);
 	}
 	chTMStopMeasurementX(&mem_tmu);
-	chprintf(chp, "successfully written 100 char values during %d mks\r\n",
+    if (i == 101)
+	    VEEPROM_LOGINFO("Written 100 char values during %d mks: PASSED\r\n",
 			RTC2US(STM32_SYSCLK, mem_tmu.last));
 }
 
@@ -160,25 +157,26 @@ static void cmd_readflash(BaseSequentialStream *chp, int argc, char *argv[]) {
 	time_measurement_t mem_tmu;
 	chTMObjectInit(&mem_tmu);
 	chTMStartMeasurementX(&mem_tmu);
+
 	for (; i < 101; i++) {
 		vdata *v = veeprom_read(i, VSTATUS);
-		if (v == NULL) {
-			ERROR(emsg(ERROR_NULLPTR));
-			continue;
-		}
-		uint16_t *p = v->p;
-		COND_ERROR(*p == i, "id error");
+		VEEPROM_TRACE(v != NULL, ERROR_NULLPTR, break;);
+        uint16_t *p = v->p;
+		VEEPROM_TRACE(*p == i, ERROR_ID, break;);
 		p++;
-		COND_ERROR(*p == 1, "length error");
+		VEEPROM_TRACE(*p == 1, ERROR_LENGTH, break;);
 		p++;
-		COND_ERROR(*(char*) p == TEST_VECTOR[i], "value error");
+		VEEPROM_TRACE(*(char*) p == TEST_VECTOR[i], ERROR_DATA, break;);
 		p++;
 		uint16_t echecksum = i ^ 1 ^ TEST_VECTOR[i];
-		COND_ERROR(*p == echecksum, "checksum error");
+		VEEPROM_TRACE(*p == echecksum, ERROR_CHECKSUM, break;);
 	}
 	chTMStopMeasurementX(&mem_tmu);
-	chprintf(chp, "successfully read 100 values during %d mks\r\n",
-			RTC2US(STM32_SYSCLK, mem_tmu.last));
+
+    if (i == 101) {
+        VEEPROM_LOGINFO("Read 100 values during %d mks: PASSED\r\n",
+                RTC2US(STM32_SYSCLK, mem_tmu.last));
+    }
 }
 
 static const ShellCommand commands[] = {

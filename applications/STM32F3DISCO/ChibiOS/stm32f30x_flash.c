@@ -76,9 +76,8 @@
 #include "stm32f30x_flash.h"
 #include "errnum.h"
 #include "errmsg.h"
+#include "wrappers.h"
 
-/* TODO  */
-#define assert_param(expr) ((void)0)
 
 /** @addtogroup STM32F30x_StdPeriph_Driver
   * @{
@@ -138,7 +137,7 @@ void FLASH_SetLatency(uint32_t FLASH_Latency)
    uint32_t tmpreg = 0;
   
   /* Check the parameters */
-  assert_param(IS_FLASH_LATENCY(FLASH_Latency));
+  VEEPROM_TRACE(IS_FLASH_LATENCY(FLASH_Latency), ERROR_FLASH_ASSERT, return;);
   
   /* Read the ACR register */
   tmpreg = FLASH->ACR;  
@@ -162,7 +161,7 @@ void FLASH_SetLatency(uint32_t FLASH_Latency)
 void FLASH_HalfCycleAccessCmd(FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  VEEPROM_TRACE(IS_FUNCTIONAL_STATE(NewState), ERROR_FLASH_ASSERT, return;);
    
   if(NewState != DISABLE)
   {
@@ -183,7 +182,7 @@ void FLASH_HalfCycleAccessCmd(FunctionalState NewState)
 void FLASH_PrefetchBufferCmd(FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  VEEPROM_TRACE(IS_FUNCTIONAL_STATE(NewState), ERROR_FLASH_ASSERT, return;);
    
   if(NewState != DISABLE)
   {
@@ -268,7 +267,8 @@ FLASH_Status FLASH_ErasePage(uint32_t Page_Address)
   FLASH_Status status = FLASH_COMPLETE;
 
   /* Check the parameters */
-  assert_param(IS_FLASH_PROGRAM_ADDRESS(Page_Address));
+  VEEPROM_TRACE(IS_FLASH_PROGRAM_ADDRESS(Page_Address), ERROR_PARAM,
+          return FLASH_ERROR_PROGRAM;);
  
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
@@ -298,7 +298,7 @@ FLASH_Status FLASH_ErasePage(uint32_t Page_Address)
   *         all the FLASH_Lock() to disable the flash memory access 
   *         (recommended to protect the FLASH memory against possible unwanted operation)
   * @param  None
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM,
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
   */
 FLASH_Status FLASH_EraseAllPages(void)
@@ -333,7 +333,7 @@ FLASH_Status FLASH_EraseAllPages(void)
   *         (recommended to protect the FLASH memory against possible unwanted operation)  
   * @param  Address: specifies the address to be programmed.
   * @param  Data: specifies the data to be programmed.
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM,
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT. 
   */
 FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data)
@@ -342,7 +342,8 @@ FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data)
   __IO uint32_t tmp = 0;
 
   /* Check the parameters */
-  assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+  VEEPROM_TRACE(IS_FLASH_PROGRAM_ADDRESS(Address), ERROR_PARAM,
+          return FLASH_ERROR_PROGRAM;);
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
@@ -391,7 +392,7 @@ FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data)
   *         (recommended to protect the FLASH memory against possible unwanted operation) 
   * @param  Address: specifies the address to be programmed.
   * @param  Data: specifies the data to be programmed.
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM,
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT. 
   */
 FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data)
@@ -399,7 +400,8 @@ FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data)
   FLASH_Status status = FLASH_COMPLETE;
 
   /* Check the parameters */
-  assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+  VEEPROM_TRACE(IS_FLASH_PROGRAM_ADDRESS(Address), ERROR_PARAM,
+          return FLASH_ERROR_PROGRAM;);
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
@@ -521,7 +523,7 @@ void FLASH_OB_Launch(void)
   * @brief  Erases the FLASH option bytes.
   * @note   This functions erases all option bytes except the Read protection (RDP). 
   * @param  None
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM,
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
   */
 FLASH_Status FLASH_OB_Erase(void)
@@ -601,7 +603,7 @@ FLASH_Status FLASH_OB_EnableWRP(uint32_t OB_WRP)
   FLASH_Status status = FLASH_COMPLETE;
   
   /* Check the parameters */
-  assert_param(IS_OB_WRP(OB_WRP));
+  VEEPROM_TRACE(IS_OB_WRP(OB_WRP), ERROR_PARAM, return FLASH_ERROR_WRP;);
     
   OB_WRP = (uint32_t)(~OB_WRP);
   WRP0_Data = (uint16_t)(OB_WRP & OB_WRP0_WRP0);
@@ -658,7 +660,7 @@ FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP)
   FLASH_Status status = FLASH_COMPLETE;
   
   /* Check the parameters */
-  assert_param(IS_OB_RDP(OB_RDP));
+  VEEPROM_TRACE(IS_OB_RDP(OB_RDP), ERROR_PARAM, return FLASH_ERROR_PROGRAM;);
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
   
   if(status == FLASH_COMPLETE)
@@ -715,7 +717,7 @@ FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP)
   *   This parameter can be one of the following values:
   *     @arg OB_STDBY_NoRST: No reset generated when entering in STANDBY
   *     @arg OB_STDBY_RST: Reset generated when entering in STANDBY
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG, 
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM, 
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
   */
 FLASH_Status FLASH_OB_UserConfig(uint8_t OB_IWDG, uint8_t OB_STOP, uint8_t OB_STDBY)
@@ -723,9 +725,9 @@ FLASH_Status FLASH_OB_UserConfig(uint8_t OB_IWDG, uint8_t OB_STOP, uint8_t OB_ST
   FLASH_Status status = FLASH_COMPLETE; 
 
   /* Check the parameters */
-  assert_param(IS_OB_IWDG_SOURCE(OB_IWDG));
-  assert_param(IS_OB_STOP_SOURCE(OB_STOP));
-  assert_param(IS_OB_STDBY_SOURCE(OB_STDBY));
+  VEEPROM_TRACE(IS_OB_IWDG_SOURCE(OB_IWDG), ERROR_PARAM, return FLASH_ERROR_PROGRAM;);
+  VEEPROM_TRACE(IS_OB_STOP_SOURCE(OB_STOP), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
+  VEEPROM_TRACE(IS_OB_STDBY_SOURCE(OB_STDBY), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
 
   /* Authorize the small information block programming */
   FLASH->OPTKEYR = FLASH_KEY1;
@@ -767,7 +769,7 @@ FLASH_Status FLASH_OB_BOOTConfig(uint8_t OB_BOOT1)
   FLASH_Status status = FLASH_COMPLETE; 
 
   /* Check the parameters */
-  assert_param(IS_OB_BOOT1(OB_BOOT1));
+  VEEPROM_TRACE(IS_OB_BOOT1(OB_BOOT1), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
 
   /* Authorize the small information block programming */
   FLASH->OPTKEYR = FLASH_KEY1;
@@ -809,7 +811,7 @@ FLASH_Status FLASH_OB_VDDAConfig(uint8_t OB_VDDA_ANALOG)
   FLASH_Status status = FLASH_COMPLETE; 
 
   /* Check the parameters */
-  assert_param(IS_OB_VDDA_ANALOG(OB_VDDA_ANALOG));
+  VEEPROM_TRACE(IS_OB_VDDA_ANALOG(OB_VDDA_ANALOG), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
 
   /* Authorize the small information block programming */
   FLASH->OPTKEYR = FLASH_KEY1;
@@ -851,7 +853,7 @@ FLASH_Status FLASH_OB_SRAMParityConfig(uint8_t OB_SRAM_Parity)
   FLASH_Status status = FLASH_COMPLETE; 
 
   /* Check the parameters */
-  assert_param(IS_OB_SRAM_PARITY(OB_SRAM_Parity));
+  VEEPROM_TRACE(IS_OB_SRAM_PARITY(OB_SRAM_Parity), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
 
   /* Wait for last operation to be completed */
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
@@ -933,14 +935,14 @@ FLASH_Status FLASH_OB_WriteUser(uint8_t OB_USER)
   * @param  Address: specifies the address to be programmed.
   *   This parameter can be 0x1FFFF804 or 0x1FFFF806. 
   * @param  Data: specifies the data to be programmed.
-  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+  * @retval FLASH Status: The returned value can be: FLASH_ERROR_PROGRAM,
   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
   */
 FLASH_Status FLASH_ProgramOptionByteData(uint32_t Address, uint8_t Data)
 {
   FLASH_Status status = FLASH_COMPLETE;
   /* Check the parameters */
-  assert_param(IS_OB_DATA_ADDRESS(Address));
+  VEEPROM_TRACE(IS_OB_DATA_ADDRESS(Address), ERROR_PARAM, return FLASH_ERROR_PROGRAM);
   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
 
   if(status == FLASH_COMPLETE)
@@ -1032,8 +1034,8 @@ FlagStatus FLASH_OB_GetRDP(void)
 void FLASH_ITConfig(uint32_t FLASH_IT, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_IT(FLASH_IT)); 
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  VEEPROM_TRACE(IS_FLASH_IT(FLASH_IT), ERROR_PARAM, return;); 
+  VEEPROM_TRACE(IS_FUNCTIONAL_STATE(NewState), ERROR_PARAM, return;);
   
   if(NewState != DISABLE)
   {
@@ -1047,33 +1049,23 @@ void FLASH_ITConfig(uint32_t FLASH_IT, FunctionalState NewState)
   }
 }
 
-/**
-  * @brief  Checks whether the specified FLASH flag is set or not.
-  * @param  FLASH_FLAG: specifies the FLASH flag to check.
-  *   This parameter can be one of the following values:
-  *     @arg FLASH_FLAG_BSY: FLASH write/erase operations in progress flag 
-  *     @arg FLASH_FLAG_PGERR: FLASH Programming error flag flag
-  *     @arg FLASH_FLAG_WRPERR: FLASH Write protected error flag
-  *     @arg FLASH_FLAG_EOP: FLASH End of Programming flag        
-  * @retval The new state of FLASH_FLAG (SET or RESET).
-  */
-FlagStatus FLASH_GetFlagStatus(uint32_t FLASH_FLAG)
+int FLASH_GetFlagStatus(uint32_t FLASH_FLAG, FlagStatus *status)
 {
-  FlagStatus bitstatus = RESET;
-
-  /* Check the parameters */
-  assert_param(IS_FLASH_GET_FLAG(FLASH_FLAG));
+  VEEPROM_THROW(IS_FLASH_GET_FLAG(FLASH_FLAG), ERROR_PARAM);
+  VEEPROM_THROW(status != NULL, ERROR_NULLPTR);
+  
+  *status = RESET;
 
   if((FLASH->SR & FLASH_FLAG) != (uint32_t)RESET)
   {
-    bitstatus = SET;
+    *status = SET;
   }
   else
   {
-    bitstatus = RESET;
+    *status = RESET;
   }
-  /* Return the new state of FLASH_FLAG (SET or RESET) */
-  return bitstatus; 
+
+  return OK;
 }
 
 /**
@@ -1088,7 +1080,7 @@ FlagStatus FLASH_GetFlagStatus(uint32_t FLASH_FLAG)
 void FLASH_ClearFlag(uint32_t FLASH_FLAG)
 {
   /* Check the parameters */
-  assert_param(IS_FLASH_CLEAR_FLAG(FLASH_FLAG));
+  VEEPROM_TRACE(IS_FLASH_CLEAR_FLAG(FLASH_FLAG), ERROR_PARAM, return;);
   
   /* Clear the flags */
   FLASH->SR = FLASH_FLAG;
@@ -1163,14 +1155,14 @@ int flash_write_short(uint16_t data, uint16_t *p) {
     FLASH_Status status = FLASH_ProgramHalfWord((uint32_t)p, data);
     if (status == FLASH_COMPLETE)
         return OK;
-    return ERROR_FLASHWRT;
+    return ERROR_FLASH_WRITE;
 }
 
 int flash_write_int(uint32_t data, uint32_t *p) {
     FLASH_Status status = FLASH_ProgramWord((uint32_t)p, data);
     if (status == FLASH_COMPLETE)
         return OK;
-    return ERROR_FLASHWRT;
+    return ERROR_FLASH_WRITE;
 }
 
 int flash_zero_short(uint16_t *p) {
@@ -1181,7 +1173,7 @@ int flash_erase_page(uint16_t *p) {
     FLASH_Status status = FLASH_ErasePage((uint32_t)p);
     if (status == FLASH_COMPLETE)
         return OK;
-    return ERROR_FLASHERASE;
+    return ERROR_FLASH_ERASE;
 }
 
 

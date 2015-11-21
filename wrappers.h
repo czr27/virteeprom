@@ -25,7 +25,7 @@
 
 #define __WRAPPER(some_code) do{\
     some_code\
-} while(0)
+} while(0);
 
 
 /*
@@ -50,12 +50,18 @@
     #define VEEPROM_LOGERROR(format, args...) \
         VEEPROM_Log(VEEPROM_LOGTYPE_ERROR, VEEPROM_LOG_PREFIX format, VEEPROM_LOG_PREFIX_ARGS, ## args);
 
+    #define VEEPROM_LOGINFO(format, args...) \
+        VEEPROM_Log(VEEPROM_LOGTYPE_INFO, VEEPROM_LOG_PREFIX format, VEEPROM_LOG_PREFIX_ARGS, ## args);
+
 #else
 
     #define VEEPROM_LOGDEBUG(args...)
 
     #define VEEPROM_LOGERROR(format, args...) \
         VEEPROM_Log(VEEPROM_LOGTYPE_ERROR, format, ## args);
+
+    #define VEEPROM_LOGINFO(format, args...) \
+        VEEPROM_Log(VEEPROM_LOGTYPE_INFO, format, ## args);
 
 #endif
 

@@ -581,10 +581,11 @@ static int init_page(vrw_cursor *cursor) {
 
 
 static int init_data(veeprom_status *vstatus) {
-    if (vstatus->busy_pages < 0)
+    if (vstatus->busy_pages < 0) {
         VEEPROM_THROW(0, ERROR_DCNSTY);
-    else if (vstatus->busy_pages == 0)
+    } else if (vstatus->busy_pages == 0) {
         return OK;
+    }
 
     vrw_cursor *cursor = create_cursor();
     VEEPROM_THROW(cursor != NULL, ERROR_NULLPTR);
@@ -749,7 +750,7 @@ int veeprom_status_release(veeprom_status *vstatus) {
 
 
 veeprom_status *veeprom_create_status() {
-    return VEEPROM_Alloc(veeprom_status);
+    return (veeprom_status*)VEEPROM_Alloc(veeprom_status);
 }
 
 
@@ -859,7 +860,7 @@ static int set_receiving(int physnum, rbnode **f, veeprom_status *vstatus) {
         } else {
             VEEPROM_THROW(node != NULL, ERROR_NULLPTR);
             counter = ((vpage_status*)node->data)->counter + 1;
-            VEEPROM_THROW(counter < FLASH_RESOURCE, ERROR_FLEXP);
+            VEEPROM_THROW(counter < FLASH_RESOURCE, ERROR_FLASH_EXPIRED);
             ret = flash_write_short(counter, p + 1);
         }
     }

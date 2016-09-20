@@ -4,7 +4,7 @@
  *  This file is a part of VirtEEPROM, emulation of EEPROM (Electrically
  *  Erasable Programmable Read-only Memory).
  *
- *  (C) 2015  Nina Evseenko <anvoebugz@gmail.com>
+ *  (C) 2016  Nina Evseenko <anvoebugz@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -242,7 +242,7 @@ static rbtree *rb_delete_repair(rbtree *tree, rbnode *x) {
             if (w->color == RB_RED) {
                 w->color = RB_BLACK;
                 x->parent->color = RB_RED;
-                tree = rb_left_rotate(tree, x->parent);
+                tree = rb_right_rotate(tree, x->parent);
                 w = x->parent->left;
             }
             if (w->right->color == RB_BLACK && w->left->color == RB_BLACK) {
@@ -252,13 +252,13 @@ static rbtree *rb_delete_repair(rbtree *tree, rbnode *x) {
                 if (w->left == RB_BLACK) {
                     w->right->color = RB_BLACK;
                     w->color = RB_RED;
-                    tree = rb_right_rotate(tree, w);
+                    tree = rb_left_rotate(tree, w);
                     w = x->parent->left;
                 }
                 w->color = x->parent->color;
                 x->parent->color = RB_BLACK;
                 w->left->color = RB_BLACK;
-                tree = rb_left_rotate(tree, x->parent);
+                tree = rb_right_rotate(tree, x->parent);
                 x = tree->root;
             }
         }

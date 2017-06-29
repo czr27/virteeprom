@@ -4,7 +4,7 @@
  *  This file is a part of VirtEEPROM, emulation of EEPROM (Electrically 
  *  Erasable Programmable Read-only Memory).
  *
- *  (C) 2015  Nina Evseenko <anvoebugz@gmail.com>
+ *  (C) 2017  Nina Evseenko <anvoebugz@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@
 
 #include "types.h"
 
-int flash_write_short(uint16_t data, uint16_t *p);
+int init_blocks();
 
-int flash_write_int(uint32_t data, uint32_t *p);
+int flash_invert(flash_chunk_t *p);
 
-int flash_zero_short(uint16_t *p);
+int flash_write_chunk(flash_chunk_t data, flash_chunk_t *addr);
 
-int flash_erase_page(uint16_t *p);
+int flash_erase_page(flash_chunk_t *p);
 
 
 #endif

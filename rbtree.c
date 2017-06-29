@@ -1,5 +1,5 @@
 /*
- *  rbtree.c
+ *  rbtree_t.c
  *
  *  This file is a part of VirtEEPROM, emulation of EEPROM (Electrically
  *  Erasable Programmable Read-only Memory).
@@ -19,10 +19,12 @@
 #include "rbtree.h"
 #include <stdlib.h>
 #include "mem.h"
+#include "errdef.h"
+#include <wrappers.h>
 
 
-static rbtree *rb_left_rotate(rbtree *tree, rbnode *x) {
-    rbnode *y = x->right;
+static rbtree_t *rb_left_rotate(rbtree_t *tree, rbnode_t *x) {
+    rbnode_t *y = x->right;
     x->right = y->left;
 
     if (y->left != tree->nullnode)
@@ -44,8 +46,8 @@ static rbtree *rb_left_rotate(rbtree *tree, rbnode *x) {
 }
 
 
-static rbtree *rb_right_rotate(rbtree *tree, rbnode *x) {
-    rbnode *y = x->left;
+static rbtree_t *rb_right_rotate(rbtree_t *tree, rbnode_t *x) {
+    rbnode_t *y = x->left;
     x->left = y->right;
 
     if (y->right != tree->nullnode)
@@ -67,8 +69,8 @@ static rbtree *rb_right_rotate(rbtree *tree, rbnode *x) {
 }
 
 
-static rbtree *rb_insert_repair(rbtree *tree, rbnode *node) {
-    rbnode *y = NULL;
+static rbtree_t *rb_insert_repair(rbtree_t *tree, rbnode_t *node) {
+    rbnode_t *y = NULL;
     while (node->parent->color == RB_RED) {
         if (node->parent == node->parent->parent->left) {
             y = node->parent->parent->right;
@@ -107,38 +109,39 @@ static rbtree *rb_insert_repair(rbtree *tree, rbnode *node) {
     }
     tree->root->color = RB_BLACK;
     return tree;
+
 }
 
 
-inline int rb_is_nullnode(rbtree *tree, rbnode *node) {
+inline int rb_is_nullnode(rbtree_t *tree, rbnode_t *node) {
     return (node == 0 || node == tree->nullnode);
 }
 
 
-rbnode *rb_min_node(rbtree *tree, rbnode *node) {
+rbnode_t *rb_min_node(rbtree_t *tree, rbnode_t *node) {
     while (node != tree->nullnode && node->left != tree->nullnode)
         node = node->left;
     return node;
 }
 
 
-rbnode *rb_max_node(rbtree *tree, rbnode *node) {
+rbnode_t *rb_max_node(rbtree_t *tree, rbnode_t *node) {
     while (node != tree->nullnode && node->right != tree->nullnode)
         node = node->right;
     return node;
 }
 
 
-rbnode *rb_next_node(rbtree *tree, rbnode *node) {
+rbnode_t *rb_next_node(rbtree_t *tree, rbnode_t *node) {
     if (tree == NULL || node == NULL || node == tree->nullnode)
         return node;
 
-    rbnode *nullnode = tree->nullnode;
+    rbnode_t *nullnode = tree->nullnode;
 
     if (node->right != nullnode)
         return rb_min_node(tree, node->right);
 
-    rbnode *p = node->parent;
+    rbnode_t *p = node->parent;
     while (p != nullnode && p->right == node) {
         node = p;
         p = p->parent;
@@ -147,15 +150,15 @@ rbnode *rb_next_node(rbtree *tree, rbnode *node) {
 }
 
 
-rbnode *rb_prev_node(rbtree *tree, rbnode *node) {
+rbnode_t *rb_prev_node(rbtree_t *tree, rbnode_t *node) {
     if (tree == NULL || node == NULL || node == tree->nullnode)
         return node;
 
-    rbnode *nullnode = tree->nullnode;
+    rbnode_t *nullnode = tree->nullnode;
     if (node->left != nullnode)
         return rb_max_node(tree, node->left);
 
-    rbnode *p = node->parent;
+    rbnode_t *p = node->parent;
     while (p != nullnode && p->left == node) {
         node = p;
         p = p->parent;
@@ -164,9 +167,9 @@ rbnode *rb_prev_node(rbtree *tree, rbnode *node) {
 }
 
 
-rbtree *rb_insert_node(rbtree *tree, rbnode *node) {
-    rbnode *y = tree->nullnode;
-    rbnode *x = tree->root;
+rbtree_t *rb_insert_node(rbtree_t *tree, rbnode_t *node) {
+    rbnode_t *y = tree->nullnode;
+    rbnode_t *x = tree->root;
 
     while (x != tree->nullnode) {
         y = x;
@@ -197,7 +200,7 @@ rbtree *rb_insert_node(rbtree *tree, rbnode *node) {
 }
 
 
-static rbtree *rb_replace(rbtree *tree, rbnode *n, rbnode *replacer) {
+static rbtree_t *rb_replace(rbtree_t *tree, rbnode_t *n, rbnode_t *replacer) {
     if (n->parent == tree->nullnode)
         tree->root = replacer;
     else if (n == n->parent->left)
@@ -210,8 +213,8 @@ static rbtree *rb_replace(rbtree *tree, rbnode *n, rbnode *replacer) {
 }
 
 
-static rbtree *rb_delete_repair(rbtree *tree, rbnode *x) {
-    rbnode *w = NULL;
+static rbtree_t *rb_delete_repair(rbtree_t *tree, rbnode_t *x) {
+    rbnode_t *w = NULL;
     while (x != tree->nullnode && x != tree->root && x->color == RB_BLACK) {
         if (x == x->parent->left) {
             w = x->parent->right;
@@ -268,13 +271,13 @@ static rbtree *rb_delete_repair(rbtree *tree, rbnode *x) {
 }
 
 
-rbtree *rb_delete_node(rbtree *tree, rbnode *z) {
-    if (tree == NULL || z == NULL)
+rbtree_t *rb_delete_node(rbtree_t *tree, rbnode_t *z) {
+    if (tree == NULL || z == NULL || z == tree->nullnode)
         return tree;
 
-    rbnode *y = z;
+    rbnode_t *y = z;
     int y_original_color = y->color;
-    rbnode *x = NULL;
+    rbnode_t *x = NULL;
 
     if (z->left == tree->nullnode) {
         x = z->right;
@@ -304,8 +307,8 @@ rbtree *rb_delete_node(rbtree *tree, rbnode *z) {
 }
 
 
-rbnode *rb_search_node(rbtree *tree, void *data) {
-    rbnode *p = tree->root;
+rbnode_t *rb_search_node(rbtree_t *tree, void *data) {
+    rbnode_t *p = tree->root;
     int (*cmp)(void*, void*) = tree->comparator;
     while (p != tree->nullnode) {
         int ret = (*cmp)(data, p->data);
@@ -320,10 +323,10 @@ rbnode *rb_search_node(rbtree *tree, void *data) {
 }
 
 
-rbtree *rb_create_tree(int (*cmp_func)(void*, void*)) {
-    rbtree *tree = VEEPROM_Alloc(rbtree);
+rbtree_t *rb_create_tree(int (*cmp_func)(void*, void*)) {
+    rbtree_t *tree = VEEPROM_Alloc(rbtree_t);
 
-    rbnode *node = rb_create_node();
+    rbnode_t *node = rb_create_node();
     node->color = RB_BLACK;
     node->data = NULL;
     node->parent = NULL;
@@ -336,31 +339,33 @@ rbtree *rb_create_tree(int (*cmp_func)(void*, void*)) {
 }
 
 
-int rb_release_tree(rbtree *tree) {
-    if (tree == NULL)
-        return 0;
+int rb_release_tree(rbtree_t *tree) {
+    THROW (tree != NULL, ERROR_NULLPTR);
 
-    rbnode *node = rb_min_node(tree, tree->root);
+    rbnode_t *node = rb_min_node(tree, tree->root);
     while (!rb_is_nullnode(tree, node)) {
         tree = rb_delete_node(tree, node);
-        VEEPROM_Dealloc(rbnode, node);
+        VEEPROM_Dealloc(rbnode_t, node);
         node = rb_min_node(tree, tree->root);
     }
 
-    VEEPROM_Dealloc(rbnode, tree->nullnode);
-    VEEPROM_Dealloc(rbtree, tree);
+    VEEPROM_Dealloc(rbnode_t, tree->nullnode);
+    VEEPROM_Dealloc(rbtree_t, tree);
 
-    return 0;
+    return OK;
 }
 
 
-rbnode *rb_create_node() {
-    return VEEPROM_Alloc(rbnode);
+rbnode_t *rb_create_node() {
+    return VEEPROM_Alloc(rbnode_t);
 }
 
 
-void rb_release_node(rbnode *node) {
-    if (node == NULL)
-        return;
-    VEEPROM_Dealloc(rbnode, node);
+int rb_release_node(rbtree_t *tree, rbnode_t *node) {
+    THROW (node != NULL, ERROR_NULLPTR);
+    THROW (node != tree->nullnode, ERROR_DCNSTY);
+
+    VEEPROM_Dealloc(rbnode_t, node);
+
+    return OK;
 }

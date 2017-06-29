@@ -1,10 +1,10 @@
 /*
- *  rbtree.h
+ *  rbtree_t.h
  *
  *  This file is a part of VirtEEPROM, emulation of EEPROM (Electrically
  *  Erasable Programmable Read-only Memory).
  *
- *  (C) 2015  Nina Evseenko <anvoebugz@gmail.com>
+ *  (C) 2016  Nina Evseenko <anvoebugz@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,48 +25,48 @@
 #define RB_BLACK 0
 
 
-struct rbnode {
-    struct rbnode *parent;
-    struct rbnode *left;
-    struct rbnode *right;
+struct rbnode_t {
+    struct rbnode_t *parent;
+    struct rbnode_t *left;
+    struct rbnode_t *right;
     char color;
     void *data;
 };
-typedef struct rbnode rbnode;
+typedef struct rbnode_t rbnode_t;
 
 
-struct rbtree {
-    struct rbnode *root;
-    struct rbnode *nullnode;
+struct rbtree_t {
+    rbnode_t *root;
+    rbnode_t *nullnode;
     int (*comparator)(void *data1, void *data2);
 };
-typedef struct rbtree rbtree;
+typedef struct rbtree_t rbtree_t;
 
 
-int rb_is_nullnode(rbtree *tree, rbnode *node);
+int rb_is_nullnode(rbtree_t *tree, rbnode_t *node);
 
-rbnode *rb_min_node(rbtree *tree, rbnode *node);
+rbnode_t *rb_min_node(rbtree_t *tree, rbnode_t *node);
 
-rbnode *rb_max_node(rbtree *tree, rbnode *node);
+rbnode_t *rb_max_node(rbtree_t *tree, rbnode_t *node);
 
-rbnode* rb_next_node(rbtree *tree, rbnode *node);
+rbnode_t* rb_next_node(rbtree_t *tree, rbnode_t *node);
 
-rbnode* rb_prev_node(rbtree *tree, rbnode *node);
+rbnode_t* rb_prev_node(rbtree_t *tree, rbnode_t *node);
 
-rbtree *rb_create_tree(int (*cmp_func)(void*, void*));
+rbtree_t *rb_create_tree(int (*cmp_func)(void*, void*));
 
-extern rbnode *rb_create_node();
+extern rbnode_t *rb_create_node();
 
-int rb_release_tree(rbtree *tree);
+int rb_release_tree(rbtree_t *tree);
 
-rbtree *rb_insert_node(rbtree *tree, rbnode *node);
+rbtree_t *rb_insert_node(rbtree_t *tree, rbnode_t *node);
 
-rbtree *rb_delete_node(rbtree *tree, rbnode *node);
+rbtree_t *rb_delete_node(rbtree_t *tree, rbnode_t *node);
 
-rbnode *rb_search_node(rbtree *tree, void *data);
+rbnode_t *rb_search_node(rbtree_t *tree, void *data);
 
-rbtree *rb_release_nodes(rbtree *tree);
+rbtree_t *rb_release_nodes(rbtree_t *tree);
 
-void rb_release_node(rbnode *node);
+int rb_release_node(rbtree_t *tree, rbnode_t *node);
 
 #endif

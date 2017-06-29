@@ -4,7 +4,7 @@
  *  This file is a part of VirtEEPROM, emulation of EEPROM (Electrically
  *  Erasable Programmable Read-only Memory).
  *
- *  (C) 2015  Nina Evseenko <anvoebugz@gmail.com>
+ *  (C) 2017  Nina Evseenko <anvoebugz@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,102 +21,98 @@
 #include "flash_cfg.h"
 #include "flash.h"
 #include "types.h"
-#include "rbtree.h"
 
-#define VEEPROM_PAGE_HEADER 4
+/*
+ * VEEPROM header locates at the top of a page.
+ * First chunk  - page status
+ * Second chunk - virtual number
+ */
+#define VEEPROM_HEADER_CHUNKS    2
+#define VEEPROM_HEADER_SIZE     (VEEPROM_HEADER_CHUNKS * sizeof(flash_chunk_t))
 
-#define VEEPROM_PAGE_HEADER_2B 2
 
-#define PAGE_ERASED 0xFFFF
-#define PAGE_RECEIVING 0xAAAA
-#define PAGE_VALID 0x0000
+/*
+ * It's supposed that every flash page divisible by chunks equal size.
+ */
+#define FLASH_PAGE_CHUNKS             (FLASH_PAGE_SIZE / sizeof(flash_chunk_t))
 
-#define VRW_REPLAY 0x200
-#define VRW_PAGE_FINISHED 0x100
 
-#define VEEPROM_MAX_VIRTNUM 0xfffe
+/*
+ * Define the number of chunks depending on the platform.
+ */
+#define TO_CHUNKS_16(v)  ((v + (v & 1)) >> 1)
+#define TO_CHUNKS_32(v)  (v / 4 + (((v & 0x03) >> 1) | (v & 0x01)))
+#define TO_CHUNKS_64(v)  (v / 8 + (((v & 0x07) >> 2) | ((v & 0x02) >> 1) | (v & 0x01) ))
+
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
-#define FLASH_RESOURCE 0xFFFF
+#define VEEPROM_BUSY_PAGE_FLAG -1
 
-struct vpage_status {
-    int16_t counter;
-    int16_t physnum;
-    int16_t fragments;
-    int16_t free_space;
-};
-typedef struct vpage_status vpage_status;
+#ifndef VEEPROM_DEBUG
+#define VEEPROM_MODULE(t) static t
+#else
+#define VEEPROM_MODULE(t) t
+#endif
 
 
-struct veeprom_status {
-    struct rbtree *page_order;
+typedef struct {
     int16_t busy_map[FLASH_PAGE_COUNT];
     int busy_pages;
-    struct rbtree *ids;
-    uint16_t *flash_start;
+    flash_chunk_t *flash_start;
     int16_t next_alloc;
-};
-typedef struct veeprom_status veeprom_status;
+    int flags;
+} veeprom_status_t;
+
+
+typedef struct {
+    flash_chunk_t *p_start_page;
+    flash_chunk_t *p_current;
+    flash_chunk_t checksum;
+    int index;
+} veeprom_cursor_t;
+
+
+typedef struct {
+    flash_chunk_t id;
+    uint8_t *buf;
+    int buf_size;
+    int length;
+    flash_chunk_t *checksum;
+} veeprom_read_t;
 
 
 enum {
-    VRW_CLEAN,
-    VRW_ID_FINISHED,
-    VRW_LENGTH_FINISHED,
-    VRW_DATA_FINISHED,
-    VRW_CHECKSUM_FINISHED,
-    VRW_OK,
-    VRW_FAILED,
+    VEEPROM_NOTINITIALIZED = 0x00,
+    VEEPROM_INITIALIZED = 0x01
 };
 
 
-struct vrw_data {
-    uint16_t id;
-    uint16_t length;
-    uint16_t *p_start_data;
-    uint16_t *p_end_data;
-    uint16_t checksum;
-};
-typedef struct vrw_data vrw_data;
+/* API functions */
+
+int veeprom_init(flash_chunk_t *flash_start);
+
+int veeprom_deinit();
+
+int veeprom_write(flash_chunk_t id, uint8_t *data, flash_chunk_t length);
+
+int veeprom_read(veeprom_read_t *read_buf);
+
+int veeprom_delete(flash_chunk_t id);
+
+flash_chunk_t* veeprom_find(flash_chunk_t id);
+
+#ifdef CHIBIOS_ON
+int veeprom_clean();
+#endif
 
 
-struct vrw_cursor {
-    veeprom_status *vstatus;
-    rbnode *virtpage;
-    vrw_data *data;
-    uint16_t *p_cur;
-    uint16_t *p_start_page;
-    uint16_t *p_end_page;
-    uint16_t cur_checksum;
-    uint16_t flags;
-    uint16_t rw_ops;
-    uint16_t aligned_length_2b;
-} __attribute__((packed, aligned(4)));
-typedef struct vrw_cursor vrw_cursor;
-
-
-struct vdata {
-    uint16_t *p;
-};
-typedef struct vdata vdata;
-
-
-int veeprom_init(veeprom_status *s);
-
-veeprom_status *veeprom_create_status();
-
-int veeprom_status_init(veeprom_status *s, uint16_t *flash_start);
-
-int veeprom_status_release(veeprom_status *s);
-
-int veeprom_write(uint16_t id, uint8_t *data, int length,
-        veeprom_status *vstatus);
-
-vdata* veeprom_read(uint16_t id, veeprom_status *vstatus);
-
-int veeprom_delete(uint16_t id, veeprom_status *vstatus);
-
-int veeprom_clean(veeprom_status *vstatus);
+/* For debug and testing purposes */
+veeprom_status_t* veeprom_get_status();
+flash_chunk_t**   veeprom_get_pages();
+int               veeprom_get_pages_size();
+flash_chunk_t**   veeprom_get_ids();
+int               veeprom_get_ids_size();
+veeprom_cursor_t* veeprom_get_cursor();
 
 #endif
